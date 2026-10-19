@@ -2,7 +2,7 @@
 
 **An interactive machine that explains git merges, parallel agent work, and the AI-Native SDLC — built as a reusable mental model, with a deliberate safety/security lens for regulated (e.g. healthcare) engineering.**
 
-> **Open [`merge-works.html`](./merge-works.html)** in any browser. No build step, no dependencies, no network calls — a single self-contained file. Works in light and dark, keyboard-navigable, respects reduced-motion.
+> **Open [`index.html`](./index.html) (live at [jagnyesh.github.io/merge-works](https://jagnyesh.github.io/merge-works/))** in any browser. No build step, no dependencies, no network calls — a single self-contained file. Works in light and dark, keyboard-navigable, respects reduced-motion.
 
 ---
 
@@ -91,7 +91,7 @@ This repository is itself a small case study. The original request was to publis
 
 ## Using the artifact
 
-Open `merge-works.html` and:
+Open `index.html` and:
 
 - **Run / Pause / Step** — drive the simulation (Step is there for reduced-motion).
 - **Lanes (1–5)** — the key experiment. Push to 4–5 and watch `open→green` stay flat while `green→merge` balloons and **review debt** climbs red. That's the ceiling: the reviewer, not the machine.
