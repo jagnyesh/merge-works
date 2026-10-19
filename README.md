@@ -45,7 +45,7 @@ Two ideas the machine is built to make *obvious*:
 
 ## Mapping to the Anthropic *AI-Native SDLC Playbook*
 
-The machine traces all six stages of Anthropic's [AI-Native SDLC Playbook](https://academy.claude.com/courses/ai-native-sdlc-playbook):
+The machine traces all six stages of Anthropic's [AI-Native SDLC Playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) (Louis Claxton, Aug 2026):
 
 | Stage | In the machine |
 |---|---|
@@ -58,12 +58,13 @@ The machine traces all six stages of Anthropic's [AI-Native SDLC Playbook](https
 
 ### Where it aligns
 
-The single most faithful element is the **review-bandwidth ceiling**. The course targets teams "where the review queue cannot be allowed to build," and notes that "the practical ceiling is how many streams one person can review properly." The machine dramatizes exactly this: one reviewer, a fixed **WIP of 2**, and a **review-debt** gauge that climbs the moment you add lanes faster than the beam can cover them. Parallel sessions, selective human review (AI reviews every PR; people review the risky ones by hand), continuous merge, and CI feedback all map cleanly.
+The single most faithful element is the **review-bandwidth ceiling**. The playbook warns that under human-speed controls "either the review queue builds or code ships under-reviewed," and caps parallel sessions by "how many streams one person can review properly." The machine dramatizes exactly this: one reviewer, a fixed **WIP of 2**, and a **review-debt** gauge that climbs the moment you add lanes faster than the beam can cover them. Parallel sessions, selective human review ("layers of agentic review with human review reserved for regulated and critical code"), continuous merge, and CI feedback all map cleanly.
 
 ### Where it honestly diverges (read these twice)
 
-- **Risk tiers are an extension, not a course construct.** The course prescribes `intent.md` + plan-mode-as-default; the high/medium/low *classifier* that routes planning weight and merge authority is a local adaptation for a blast-radius-sensitive codebase. Aligned in spirit with "which code people review by hand" — but don't claim the course mandates it.
-- **The human gate sits at *merge*, not *deploy*.** The course's approval hook is a release gate. If you have no production deployment yet, relocate that gate to the merge boundary and say so — same principle, one boundary upstream. The Maintain loop is likewise *adapted*: it draws from post-merge signals (nightly CI, eval regressions, cost drift, traces), not a live prod environment.
+- **Risk tiers are an extension, not a playbook construct.** The playbook prescribes `intent.md` + plan-mode-as-default; the high/medium/low *classifier* that routes planning weight and merge authority is a local adaptation for a blast-radius-sensitive codebase. Aligned in spirit with "human review reserved for regulated and critical code" — but don't claim the playbook mandates it.
+- **The human gate sits at *merge*, not *deploy*.** The playbook's approval hook is a release gate. If you have no production deployment yet, relocate that gate to the merge boundary and say so — same principle, one boundary upstream. The Maintain loop is likewise *adapted*: it draws from post-merge signals (nightly CI, eval regressions, cost drift, traces), not a live prod environment.
+- **Low-tier self-merge is a local deviation.** The playbook keeps code-owner approval on every PR ("branch protection still requires approval from a code owner"; "the agent that wrote the code has no way to approve it"). The machine lets low-tier cars merge without the reviewer beam; the attested-SHA rule below narrows that risk but doesn't match the playbook.
 - **Don't let the picture oversell automation.** If Plan-feeds-queue and Maintain-auto-refiles are still design intent rather than shipped machinery, mark them as such. A diagram that shows everything running reads as "we do all this" when you don't yet.
 
 ---
@@ -82,7 +83,7 @@ This is the part that matters most in regulated engineering, where a wrong chang
 
 ### A worked example of the discipline (this repo)
 
-This repository is itself a small case study. The original request was to publish *the whole conversation* that produced the artifact. The assistant flagged that the session context contained a live-looking API-key fragment, descriptions of unfixed vulnerabilities in a healthcare system, and private file paths — and **refused to publish the raw transcript**, proposing a sanitized, author-curated writeup instead. The repo was also set **private with invited collaborators** rather than public. That is the safety lens applied to the act of sharing itself: *sending content to an external service publishes it; it may be cached or indexed even after deletion.* When in doubt, sanitize and scope down.
+This repository is itself a small case study. The original request was to publish *the whole conversation* that produced the artifact. The assistant flagged that the session context contained a live-looking API-key fragment, descriptions of unfixed vulnerabilities in a healthcare system, and private file paths — and **refused to publish the raw transcript**, proposing a sanitized, author-curated writeup instead. Only the generalized artifact and this README were made public (via GitHub Pages). That is the safety lens applied to the act of sharing itself: *sending content to an external service publishes it; it may be cached or indexed even after deletion.* When in doubt, sanitize and scope down.
 
 ---
 
@@ -101,11 +102,11 @@ The gauges — queue depth, open→green, green→merge, reviewer WIP, review de
 ## Provenance & sanitization
 
 - The **README is generalized** — no product names, issue numbers, file paths, or internal specifics — so it's safe to read on its own terms.
-- The **artifact** references a specific internal project by name in its title block and labels; it contains no secrets, data, or vulnerability details, and is intended for an internal audience.
+- The **artifact** is generalized the same way — no internal project names or workflow-doc references — and contains no secrets, data, or vulnerability details. It is published publicly via GitHub Pages.
 - Nothing here contains credentials, PHI, or security-sensitive internals. If you spot something that looks otherwise, open an issue and it gets scrubbed.
 
 ## Credits
 
 - Visual method: the [**anatomy** agent skill](https://github.com/wheresryan22/anatomy) — interactive isometric technical illustration.
-- Framework: Anthropic's [**AI-Native SDLC Playbook**](https://academy.claude.com/courses/ai-native-sdlc-playbook).
+- Framework: Anthropic's [**AI-Native SDLC Playbook**](https://claude.com/resources/articles/the-ai-native-sdlc-playbook).
 - Built collaboratively with Claude Code (Opus 4.8).

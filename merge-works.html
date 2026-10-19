@@ -168,7 +168,7 @@
       <div class="gauge">
         <div class="lbl"><span>queue depth</span><span class="tag ok" id="g-q-tag">healthy</span></div>
         <div class="val" id="g-queue">0 / 2</div>
-        <div class="note">Plan tops up to lanes×2 (§10). Empty = thin plan block.</div>
+        <div class="note">Plan tops up to lanes×2. Empty = thin plan block.</div>
       </div>
       <div class="gauge">
         <div class="lbl"><span>open → green</span><span class="tag ok">stable</span></div>
@@ -194,7 +194,7 @@
       <div class="gauge">
         <div class="lbl"><span>verified merges</span></div>
         <div class="val" id="g-merges">0<span class="unit" id="g-rate"></span></div>
-        <div class="note">the only output that counts (§6).</div>
+        <div class="note">the only output that counts (a local metric, not the article's).</div>
       </div>
       <div class="gauge">
         <div class="lbl"><span>signals re-filed</span><span class="tag" id="g-sig-tag" style="color:var(--accent)">maintain</span></div>
@@ -225,37 +225,37 @@
       <div class="cell"><div class="k">Drawing</div><div class="v">THE MERGE WORKS</div></div>
       <div class="cell"><div class="k">Scale</div><div class="v">N.T.S.</div></div>
       <div class="cell"><div class="k">Rev</div><div class="v">v2 · STAGES 1–6</div></div>
-      <div class="cell"><div class="k">Project</div><div class="v">ResearchFlow</div></div>
+      <div class="cell"><div class="k">Source</div><div class="v">AI-Native SDLC Playbook</div></div>
     </div>
   </div>
 
   <div class="cols">
     <div>
-      <h2>Parts list — machine → git → course stage</h2>
+      <h2>Parts list — machine → git → playbook stage</h2>
       <table class="parts">
         <thead><tr><th>Part</th><th>Is really</th><th>Stage / term</th></tr></thead>
         <tbody>
           <tr><td><span class="chip" style="background:#3f8fa6"></span>Plan hopper</td><td>stamps an <code>intent.md</code>, feeds the queue</td><td>①② Plan·Design</td></tr>
-          <tr><td><span class="chip" style="background:#cdd6df;border-color:#9aa6b2"></span>Intent card</td><td>planning weight — card height = tier</td><td>ADR · PR block · issue body (§1)</td></tr>
+          <tr><td><span class="chip" style="background:#cdd6df;border-color:#9aa6b2"></span>Intent card</td><td>planning weight — card height = tier</td><td>ADR · PR block · issue body (local)</td></tr>
           <tr><td><span class="chip" style="background:#97a3b1"></span>A lane</td><td>one branch, one PR, one issue</td><td>③ Build · branch-per-issue</td></tr>
-          <tr><td><span class="chip" style="background:#30b968;border-color:#1f9d57"></span>Build lamp + eval</td><td>CI red→green; eval gate on LLM-touching</td><td>④ Test · evals in CI (§5)</td></tr>
-          <tr><td><span class="chip" style="background:#1fb7cb"></span>Reviewer beam</td><td>fresh-context review + merge actor</td><td>⑤ Deploy · human for high/med</td></tr>
+          <tr><td><span class="chip" style="background:#30b968;border-color:#1f9d57"></span>Build lamp + eval</td><td>CI red→green; eval gate on LLM-touching</td><td>④ Test · evals in CI</td></tr>
+          <tr><td><span class="chip" style="background:#1fb7cb"></span>Reviewer beam</td><td>fresh-context review + merge actor</td><td>⑤ Deploy · human for high/med; low self-merges (local deviation)</td></tr>
           <tr><td><span class="chip" style="background:#e0943a"></span>The fitter</td><td>rebase onto the <i>current</i> trunk tip</td><td>⑤ <code>green→merge</code></td></tr>
           <tr><td><span class="chip" style="background:#5c6675"></span>Crane</td><td>the merge — locks car onto trunk</td><td>⑤ <code>main</code> advances</td></tr>
-          <tr><td><span class="chip" style="background:#cf412c"></span>Maintain monitor</td><td>post-merge signal → new intent to queue</td><td>⑥ Maintain · adapted (§11)</td></tr>
+          <tr><td><span class="chip" style="background:#cf412c"></span>Maintain monitor</td><td>post-merge signal → new intent to queue</td><td>⑥ Maintain · adapted</td></tr>
         </tbody>
       </table>
     </div>
     <div class="thesis">
       <h2>What we're trying to achieve</h2>
       <p><b>A merge is the lock-on.</b> Until the crane lifts it, a car is a reversible proposal on its own lane. The crane is the one irreversible step — the commit becomes shared history everyone branches from. And the trunk <i>moves while you work</i>: every merge forces the other in-flight cars through the <b>fitter</b> (rebase) before their own lock-on. That reconciliation is the tax parallel work pays.</p>
-      <p><b>Now the loop closes.</b> The <b style="color:var(--accent)">Plan hopper</b> keeps the queue topped to <b>lanes×2</b> (§10 queue health), stamping each intent at its tier weight — a high-risk car carries a tall ADR stack, a low-risk one a thin slip. Every merge pulls the next intent. And the <b style="color:var(--crit)">Maintain monitor</b> turns a post-merge signal — nightly CI, an eval regression, cost drift, a LangSmith trace — into a fresh <code style="font-family:var(--mono)">intent.md</code> that re-enters the <i>front</i> of the queue. That is the course's <i>“a production metric leaving its range becomes a new intent.md that restarts planning.”</i></p>
-      <p><b>Honest adaptation:</b> you have no production deploy yet (§11), so the return-pipe draws from <i>post-merge</i> signals, not a prod environment. Same loop, moved one boundary upstream.</p>
+      <p><b>Now the loop closes.</b> The <b style="color:var(--accent)">Plan hopper</b> keeps the queue topped to <b>lanes×2</b> (queue health), stamping each intent at its tier weight — a high-risk car carries a tall ADR stack, a low-risk one a thin slip. Every merge pulls the next intent. And the <b style="color:var(--crit)">Maintain monitor</b> turns a post-merge signal — nightly CI, an eval regression, cost drift, a trace — into a fresh <code style="font-family:var(--mono)">intent.md</code> that re-enters the <i>front</i> of the queue. That is the playbook's <i>“a breached control band in production writes the next <code>intent.md</code>.”</i></p>
+      <p><b>Honest adaptation:</b> with no production deploy yet,  the return-pipe draws from <i>post-merge</i> signals, not a prod environment. Same loop, moved one boundary upstream.</p>
       <p><b>The ceiling isn't the machine — it's the beam.</b> Pull Lanes to 4–5. Builds still go green (<code>open→green</code> holds), but <span class="big">green→merge balloons</span> and <b>review debt</b> climbs: one reviewer covers <b>WIP 2</b>. Faster models just feed more cars into that same queue. So the target isn't lanes running, Plan churning, or signals firing — it's <b class="big">verified merges per week</b>, and you add a lane only while the beam still reaches every green car.</p>
     </div>
   </div>
 
-  <p class="foot">DRAWN IN THE SPIRIT OF THE “ANATOMY” SKILL — one model drives both the geometry and the readouts · isometric · light + dark · interactive. Traces all six stages of Anthropic's AI-Native SDLC Playbook against your DAILY_DEV_WORKFLOW_v2.</p>
+  <p class="foot">DRAWN IN THE SPIRIT OF THE “ANATOMY” SKILL — one model drives both the geometry and the readouts · isometric · light + dark · interactive. Traces all six stages of Anthropic's <a href="https://claude.com/resources/articles/the-ai-native-sdlc-playbook" style="color:inherit">AI-Native SDLC Playbook</a>.</p>
 </div>
 
 <script>
@@ -425,7 +425,7 @@
         car.t += dt/(BUILD_DUR * (car.llm?1.3:1));   // Stage 4: LLM-touching also runs the eval gate
         if(car.t>=1){ car.stage='REVIEW'; car.t=0; car.greenAt=simT; car.enteredReview=simT; }
       } else if(car.stage==='REVIEW'){
-        if(car.tier==='low') car.t += dt/REVIEW_LOW;        // low self-merges — no reviewer needed
+        if(car.tier==='low') car.t += dt/REVIEW_LOW;        // low self-merges: local rule; the playbook requires code-owner approval on every PR
         else if(car.attended) car.t += dt/REVIEW_DUR;        // only progresses under the beam
         if(car.t>=1){ car.stage='REBASE'; car.t=0; car.stale = Math.max(0, main - car.branchMain); }
       } else if(car.stage==='REBASE'){
