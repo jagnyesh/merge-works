@@ -1,0 +1,643 @@
+<style>
+  :root{
+    --paper:#eef2f6; --panel:#e4e9ef; --ink:#1b2129; --ink-dim:#5d6875;
+    --line:#c3ccd6; --line-strong:#9aa6b2; --accent:#0e8fa3; --accent-2:#1fb7cb;
+    --good:#1f9d57; --warn:#c77a1e; --crit:#cf412c;
+    --stage-bg:#e7ecf1; --bezel:#d2dae2;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#0e1116; --panel:#161b22; --ink:#e4eaf1; --ink-dim:#8893a0;
+      --line:#283039; --line-strong:#3b4551; --accent:#2fc0d4; --accent-2:#1fb7cb;
+      --good:#36c06f; --warn:#e0a24e; --crit:#ef5a3e;
+      --stage-bg:#0b0e13; --bezel:#1a2029;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#eef2f6; --panel:#e4e9ef; --ink:#1b2129; --ink-dim:#5d6875;
+    --line:#c3ccd6; --line-strong:#9aa6b2; --accent:#0e8fa3; --accent-2:#1fb7cb;
+    --good:#1f9d57; --warn:#c77a1e; --crit:#cf412c; --stage-bg:#e7ecf1; --bezel:#d2dae2;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1116; --panel:#161b22; --ink:#e4eaf1; --ink-dim:#8893a0;
+    --line:#283039; --line-strong:#3b4551; --accent:#2fc0d4; --accent-2:#1fb7cb;
+    --good:#36c06f; --warn:#e0a24e; --crit:#ef5a3e; --stage-bg:#0b0e13; --bezel:#1a2029;
+  }
+
+  *{ box-sizing:border-box; }
+  body{ margin:0; }
+  .wrap{
+    background:var(--paper); color:var(--ink); font-family:var(--sans);
+    line-height:1.55; padding:clamp(18px,4vw,48px);
+    max-width:1180px; margin:0 auto;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--mono); font-weight:600; letter-spacing:-.01em;
+    font-size:clamp(26px,4.4vw,42px); line-height:1.05; margin:0 0 14px; text-wrap:balance;
+  }
+  h1 .sub{ color:var(--ink-dim); font-weight:400; }
+  .lede{ max-width:66ch; color:var(--ink-dim); font-size:clamp(15px,1.7vw,17px); margin:0 0 22px; }
+  .lede b{ color:var(--ink); font-weight:600; }
+
+  /* stage ribbon */
+  .ribbon{ list-style:none; margin:0 0 26px; padding:0; display:grid; grid-template-columns:repeat(6,1fr); gap:1px; border:1px solid var(--line); border-radius:4px; overflow:hidden; background:var(--line); }
+  @media (max-width:760px){ .ribbon{ grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:440px){ .ribbon{ grid-template-columns:repeat(2,1fr); } }
+  .ribbon li{ background:var(--panel); padding:9px 11px; display:flex; flex-direction:column; gap:3px; }
+  .ribbon .n{ font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:.1em; }
+  .ribbon .s{ font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.04em; }
+  .ribbon .p{ font-size:11px; color:var(--ink-dim); line-height:1.35; }
+
+  /* ---- instrument ---- */
+  .instrument{
+    border:1px solid var(--line-strong); background:var(--stage-bg);
+    border-radius:4px; position:relative; overflow:hidden;
+    display:grid; grid-template-columns: 1fr 272px;
+  }
+  @media (max-width:860px){ .instrument{ grid-template-columns:1fr; } }
+  .corner{ position:absolute; width:14px; height:14px; border:solid var(--line-strong); z-index:4; pointer-events:none; }
+  .corner.tl{ top:8px; left:8px; border-width:1px 0 0 1px; }
+  .corner.tr{ top:8px; right:8px; border-width:1px 1px 0 0; }
+  .corner.bl{ bottom:8px; left:8px; border-width:0 0 1px 1px; }
+  .corner.br{ bottom:8px; right:8px; border-width:0 1px 1px 0; }
+
+  .stage-wrap{ position:relative; }
+  svg#stage{ display:block; width:100%; height:auto; }
+  text{ font-family:var(--mono); }
+
+  /* gauge cluster */
+  .gauges{
+    border-left:1px solid var(--line); background:var(--panel);
+    padding:14px 16px 6px; display:flex; flex-direction:column; gap:2px;
+  }
+  @media (max-width:860px){ .gauges{ border-left:none; border-top:1px solid var(--line); } }
+  .gauge{ padding:9px 0; border-bottom:1px dashed var(--line); }
+  .gauge:last-child{ border-bottom:none; }
+  .gauge .lbl{
+    font-family:var(--mono); font-size:10px; letter-spacing:.15em; text-transform:uppercase;
+    color:var(--ink-dim); display:flex; justify-content:space-between; align-items:center;
+  }
+  .gauge .val{
+    font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:25px; font-weight:600;
+    line-height:1.1; margin-top:3px;
+  }
+  .gauge .val .unit{ font-size:12px; font-weight:400; color:var(--ink-dim); margin-left:3px; }
+  .gauge .note{ font-size:10.5px; color:var(--ink-dim); margin-top:2px; }
+  .tag{ font-family:var(--mono); font-size:9px; letter-spacing:.1em; padding:2px 6px; border-radius:3px; border:1px solid currentColor; }
+  .tag.ok{ color:var(--good); } .tag.warn{ color:var(--warn); } .tag.crit{ color:var(--crit); }
+  .spark{ width:100%; height:30px; display:block; margin-top:5px; }
+
+  /* controls */
+  .controls{
+    display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px;
+    padding:14px 16px; border-top:1px solid var(--line-strong); background:var(--panel);
+    grid-column:1 / -1;
+  }
+  .controls .grp{ display:flex; align-items:center; gap:9px; }
+  .controls label{ font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-dim); }
+  button{
+    font-family:var(--mono); font-size:12px; letter-spacing:.06em; color:var(--ink);
+    background:transparent; border:1px solid var(--line-strong); border-radius:3px;
+    padding:7px 13px; cursor:pointer; transition:background .15s,border-color .15s;
+  }
+  button:hover{ border-color:var(--accent); }
+  button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  button.primary{ border-color:var(--accent); color:var(--accent); }
+  input[type=range]{ accent-color:var(--accent); width:112px; }
+  select{ font-family:var(--mono); font-size:12px; padding:6px 8px; background:var(--panel); color:var(--ink); border:1px solid var(--line-strong); border-radius:3px; }
+  .lanecount{ font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:13px; min-width:1.4em; text-align:center; }
+
+  /* title block */
+  .titleblock{
+    grid-column:1 / -1; display:grid; grid-template-columns: repeat(4, 1fr);
+    border-top:1px solid var(--line-strong); font-family:var(--mono);
+  }
+  @media (max-width:560px){ .titleblock{ grid-template-columns:repeat(2,1fr); } }
+  .titleblock .cell{ padding:8px 12px; border-right:1px solid var(--line); }
+  .titleblock .cell:last-child{ border-right:none; }
+  .titleblock .k{ font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-dim); }
+  .titleblock .v{ font-size:12px; margin-top:2px; }
+
+  /* prose + table */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:34px; margin-top:40px; }
+  @media (max-width:820px){ .cols{ grid-template-columns:1fr; gap:26px; } }
+  h2{ font-family:var(--mono); font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 14px; font-weight:600; }
+  .parts{ width:100%; border-collapse:collapse; font-size:13px; }
+  .parts th, .parts td{ text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .parts th{ font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-dim); font-weight:500; }
+  .parts td:first-child{ white-space:nowrap; }
+  .chip{ display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:7px; vertical-align:-1px; border:1px solid rgba(0,0,0,.25); }
+  .parts code{ font-family:var(--mono); font-size:11.5px; background:var(--stage-bg); padding:1px 5px; border-radius:3px; color:var(--ink); }
+  .thesis p{ margin:0 0 13px; font-size:14px; }
+  .thesis p:last-child{ margin-bottom:0; }
+  .thesis b{ color:var(--ink); }
+  .thesis .big{ font-family:var(--mono); color:var(--accent); font-size:14px; }
+  .foot{ margin-top:36px; padding-top:16px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; color:var(--ink-dim); letter-spacing:.04em; }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Fig. 1 — a machine whose working is the concept</p>
+  <h1>The Merge Works <span class="sub">/ the AI-Native SDLC, as one running machine</span></h1>
+  <p class="lede">A branch is a <b>car on its own lane</b>; <code style="font-family:var(--mono)">main</code> is the <b>trunk line</b> at the front. Now the loop is closed end-to-end: the <b style="color:var(--accent)">Plan hopper</b> stamps a tier-sized <code style="font-family:var(--mono)">intent.md</code> and feeds the queue, and the <b style="color:var(--accent)">Maintain monitor</b> turns a post-merge signal back into a fresh intent. Every gauge is read straight off the machine. All six Anthropic <i>AI-Native SDLC</i> stages, in one frame.</p>
+
+  <ol class="ribbon">
+    <li><span class="n">STAGE 1</span><span class="s">Plan</span><span class="p">the hopper stamps <code style="font-family:var(--mono)">intent.md</code> → queue</span></li>
+    <li><span class="n">STAGE 2</span><span class="s">Design</span><span class="p">intent sized by tier (ADR · PR block · issue)</span></li>
+    <li><span class="n">STAGE 3</span><span class="s">Build</span><span class="p">branch → CI build</span></li>
+    <li><span class="n">STAGE 4</span><span class="s">Test</span><span class="p">build goes green + eval gate</span></li>
+    <li><span class="n">STAGE 5</span><span class="s">Deploy</span><span class="p">review → rebase → merge, gated by tier</span></li>
+    <li><span class="n">STAGE 6</span><span class="s">Maintain</span><span class="p">signal → new intent, re-filed</span></li>
+  </ol>
+
+  <div class="instrument">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+
+    <div class="stage-wrap">
+      <svg id="stage" viewBox="0 0 1000 680" role="img" aria-label="Isometric animation: a Plan hopper feeds intent cards into a queue; pull-request cars move along parallel lanes through build, review, rebase and merge onto the main trunk; a Maintain monitor sends post-merge signals back to the hopper as new intents.">
+        <g id="scene"></g>
+      </svg>
+    </div>
+
+    <aside class="gauges" aria-label="Live readouts">
+      <div class="gauge">
+        <div class="lbl"><span>queue depth</span><span class="tag ok" id="g-q-tag">healthy</span></div>
+        <div class="val" id="g-queue">0 / 2</div>
+        <div class="note">Plan tops up to lanes×2 (§10). Empty = thin plan block.</div>
+      </div>
+      <div class="gauge">
+        <div class="lbl"><span>open → green</span><span class="tag ok">stable</span></div>
+        <div class="val" id="g-og">2.5<span class="unit">s</span></div>
+        <div class="note">pipeline health. Faster models move this, not the gate below.</div>
+      </div>
+      <div class="gauge">
+        <div class="lbl"><span>green → merge</span><span class="tag" id="g-gm-tag">ok</span></div>
+        <div class="val" id="g-gm">—<span class="unit">s</span></div>
+        <div class="note">merge-gate latency — green, but waiting on the reviewer.</div>
+        <svg class="spark" id="spark" viewBox="0 0 240 30" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="gauge">
+        <div class="lbl"><span>reviewer — WIP</span><span class="tag" id="g-wip-tag">ok</span></div>
+        <div class="val" id="g-wip">0 / 2</div>
+        <div class="note">one person, two streams. Model-independent ceiling.</div>
+      </div>
+      <div class="gauge">
+        <div class="lbl"><span>review debt</span></div>
+        <div class="val" id="g-debt">0</div>
+        <div class="note">green cars idling, un-reviewed. Future rework.</div>
+      </div>
+      <div class="gauge">
+        <div class="lbl"><span>verified merges</span></div>
+        <div class="val" id="g-merges">0<span class="unit" id="g-rate"></span></div>
+        <div class="note">the only output that counts (§6).</div>
+      </div>
+      <div class="gauge">
+        <div class="lbl"><span>signals re-filed</span><span class="tag" id="g-sig-tag" style="color:var(--accent)">maintain</span></div>
+        <div class="val" id="g-signals">0</div>
+        <div class="note">nightly CI · eval · cost · trace → a new intent.</div>
+      </div>
+    </aside>
+
+    <div class="controls">
+      <div class="grp">
+        <button id="btn-play" class="primary">▶ Run</button>
+        <button id="btn-step">Step</button>
+      </div>
+      <div class="grp">
+        <label for="lanes">Lanes</label>
+        <input type="range" id="lanes" min="1" max="5" value="1" step="1">
+        <span class="lanecount" id="lanes-n">1</span>
+      </div>
+      <div class="grp">
+        <label for="speed">Speed</label>
+        <select id="speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select>
+      </div>
+      <div class="grp"><button id="btn-signal">⚡ Fire prod signal</button></div>
+      <div class="grp" style="color:var(--ink-dim);font-family:var(--mono);font-size:11px;">WIP fixed at 2 — the thing you can't buy more of.</div>
+    </div>
+
+    <div class="titleblock">
+      <div class="cell"><div class="k">Drawing</div><div class="v">THE MERGE WORKS</div></div>
+      <div class="cell"><div class="k">Scale</div><div class="v">N.T.S.</div></div>
+      <div class="cell"><div class="k">Rev</div><div class="v">v2 · STAGES 1–6</div></div>
+      <div class="cell"><div class="k">Project</div><div class="v">ResearchFlow</div></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <h2>Parts list — machine → git → course stage</h2>
+      <table class="parts">
+        <thead><tr><th>Part</th><th>Is really</th><th>Stage / term</th></tr></thead>
+        <tbody>
+          <tr><td><span class="chip" style="background:#3f8fa6"></span>Plan hopper</td><td>stamps an <code>intent.md</code>, feeds the queue</td><td>①② Plan·Design</td></tr>
+          <tr><td><span class="chip" style="background:#cdd6df;border-color:#9aa6b2"></span>Intent card</td><td>planning weight — card height = tier</td><td>ADR · PR block · issue body (§1)</td></tr>
+          <tr><td><span class="chip" style="background:#97a3b1"></span>A lane</td><td>one branch, one PR, one issue</td><td>③ Build · branch-per-issue</td></tr>
+          <tr><td><span class="chip" style="background:#30b968;border-color:#1f9d57"></span>Build lamp + eval</td><td>CI red→green; eval gate on LLM-touching</td><td>④ Test · evals in CI (§5)</td></tr>
+          <tr><td><span class="chip" style="background:#1fb7cb"></span>Reviewer beam</td><td>fresh-context review + merge actor</td><td>⑤ Deploy · human for high/med</td></tr>
+          <tr><td><span class="chip" style="background:#e0943a"></span>The fitter</td><td>rebase onto the <i>current</i> trunk tip</td><td>⑤ <code>green→merge</code></td></tr>
+          <tr><td><span class="chip" style="background:#5c6675"></span>Crane</td><td>the merge — locks car onto trunk</td><td>⑤ <code>main</code> advances</td></tr>
+          <tr><td><span class="chip" style="background:#cf412c"></span>Maintain monitor</td><td>post-merge signal → new intent to queue</td><td>⑥ Maintain · adapted (§11)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="thesis">
+      <h2>What we're trying to achieve</h2>
+      <p><b>A merge is the lock-on.</b> Until the crane lifts it, a car is a reversible proposal on its own lane. The crane is the one irreversible step — the commit becomes shared history everyone branches from. And the trunk <i>moves while you work</i>: every merge forces the other in-flight cars through the <b>fitter</b> (rebase) before their own lock-on. That reconciliation is the tax parallel work pays.</p>
+      <p><b>Now the loop closes.</b> The <b style="color:var(--accent)">Plan hopper</b> keeps the queue topped to <b>lanes×2</b> (§10 queue health), stamping each intent at its tier weight — a high-risk car carries a tall ADR stack, a low-risk one a thin slip. Every merge pulls the next intent. And the <b style="color:var(--crit)">Maintain monitor</b> turns a post-merge signal — nightly CI, an eval regression, cost drift, a LangSmith trace — into a fresh <code style="font-family:var(--mono)">intent.md</code> that re-enters the <i>front</i> of the queue. That is the course's <i>“a production metric leaving its range becomes a new intent.md that restarts planning.”</i></p>
+      <p><b>Honest adaptation:</b> you have no production deploy yet (§11), so the return-pipe draws from <i>post-merge</i> signals, not a prod environment. Same loop, moved one boundary upstream.</p>
+      <p><b>The ceiling isn't the machine — it's the beam.</b> Pull Lanes to 4–5. Builds still go green (<code>open→green</code> holds), but <span class="big">green→merge balloons</span> and <b>review debt</b> climbs: one reviewer covers <b>WIP 2</b>. Faster models just feed more cars into that same queue. So the target isn't lanes running, Plan churning, or signals firing — it's <b class="big">verified merges per week</b>, and you add a lane only while the beam still reaches every green car.</p>
+    </div>
+  </div>
+
+  <p class="foot">DRAWN IN THE SPIRIT OF THE “ANATOMY” SKILL — one model drives both the geometry and the readouts · isometric · light + dark · interactive. Traces all six stages of Anthropic's AI-Native SDLC Playbook against your DAILY_DEV_WORKFLOW_v2.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var COS = Math.cos(Math.PI/6), SIN = Math.sin(Math.PI/6);
+  var S = 34, OX = 430, OY = 198;
+  function iso(x,y,z){ return [OX + (x - y)*COS*S, OY + (x + y)*SIN*S - z*S]; }
+
+  // ---- shading: one light source, four tones off a base ----
+  function hx(n){ n = Math.max(0,Math.min(255,Math.round(n))); return (n<16?'0':'')+n.toString(16); }
+  function shade(hex, p){
+    var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    var t = p<0?0:255, a=Math.abs(p);
+    return '#'+hx(r+(t-r)*a)+hx(g+(t-g)*a)+hx(b+(t-b)*a);
+  }
+  function mat(base, stroke){ return { top:shade(base,.26), right:shade(base,-.05), left:shade(base,-.22), stroke:stroke }; }
+
+  function buildPal(dark){
+    var stroke = dark ? '#0b0f14' : '#2a323b';
+    return {
+      stroke: stroke,
+      track: mat(dark?'#49535f':'#aeb8c2', stroke),
+      trunk: mat(dark?'#39424d':'#5f6a79', stroke),
+      pad:   mat(dark?'#2d353f':'#c2cad3', stroke),
+      crane: mat(dark?'#5c6774':'#7b8792', stroke),
+      op:    mat(dark?'#7f8b98':'#444f5c', stroke),
+      plan:  mat(dark?'#2f6373':'#3f8fa6', stroke),
+      monitor: mat(dark?'#6a3a33':'#9c4a3b', stroke),
+      card:  mat(dark?'#c9d2db':'#e8edf2', stroke),
+      tier: {
+        high: mat(dark?'#e2576c':'#d6455b', stroke),
+        med:  mat(dark?'#eaa24e':'#e0943a', stroke),
+        low:  mat(dark?'#8697af':'#6a7a93', stroke)
+      },
+      tbase: { high: dark?'#e2576c':'#d6455b', med: dark?'#eaa24e':'#e0943a', low: dark?'#8697af':'#6a7a93' },
+      lampG: dark?'#38c470':'#1f9d57', lampR: dark?'#ef5a3e':'#d94226', lampA: dark?'#e0a24e':'#c77a1e',
+      beam:  dark?'#2fc0d4':'#0e8fa3', signal: dark?'#ef5a3e':'#cf412c',
+      text:  dark?'#aeb8c3':'#3a4450', textDim: dark?'#5e6a77':'#8b96a2',
+      badgeBg: dark?'#161b22':'#ffffff'
+    };
+  }
+  function isDark(){
+    var t = document.documentElement.getAttribute('data-theme');
+    if(t==='dark') return true; if(t==='light') return false;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  var PAL = buildPal(isDark());
+  function refreshPal(){ PAL = buildPal(isDark()); }
+
+  // ---- geometry: emit the three visible faces of a box ----
+  function box(x,y,z,w,d,h,m){
+    function p(X,Y,Z){ var s=iso(X,Y,Z); return s[0].toFixed(1)+','+s[1].toFixed(1); }
+    var top  = [p(x,y,z+h),p(x+w,y,z+h),p(x+w,y+d,z+h),p(x,y+d,z+h)].join(' ');
+    var right= [p(x+w,y,z),p(x+w,y+d,z),p(x+w,y+d,z+h),p(x+w,y,z+h)].join(' ');
+    var left = [p(x,y+d,z),p(x+w,y+d,z),p(x+w,y+d,z+h),p(x,y+d,z+h)].join(' ');
+    var sw = ' stroke="'+m.stroke+'" stroke-width="1" stroke-linejoin="round" vector-effect="non-scaling-stroke"';
+    return { depth: (x+w/2)+(y+d/2)+z*0.02, svg:
+      '<polygon points="'+left +'" fill="'+m.left +'"'+sw+'/>'+
+      '<polygon points="'+right+'" fill="'+m.right+'"'+sw+'/>'+
+      '<polygon points="'+top  +'" fill="'+m.top  +'"'+sw+'/>' };
+  }
+
+  // ---- world layout ----
+  var TRUNK_Y = 10;
+  var ANCHOR = { BRANCH:0.9, BUILD:4, REVIEW:7, REBASE:9.5, MERGE:12 };
+  var MERGE_X = 12.4;
+  var BUILD_DUR=2.5, BRANCH_DUR=0.7, REVIEW_DUR=3.2, REVIEW_LOW=1.1, REBASE_BASE=0.9, REBASE_PER=0.65, MERGE_DUR=1.0;
+  var WIP = 2, PLAN_INTERVAL=0.7, MAINTAIN_INTERVAL=6.5, SIGNAL_DUR=1.5;
+  var SIGNAL_TYPES = ['nightly CI','eval regression','cost drift','trace anomaly'];
+
+  var main = 0, simT = 0, verified = 0;
+  var mergeTimes = [], gmEMA = null, commits = [];
+  var sparkSamples = [], sparkAcc = 0;
+  var reviewDebt = 0, wipUsed = 0;
+  var queue = [], planTimer = 0, maintainTimer = 0, signalsFiled = 0;
+  var signals = [], lampFlash = {}, starvedFlash = 0, hopperFlash = 0;
+
+  function laneY(i){ return 8 - i*2; }
+  function cardH(tier){ return tier==='high'?0.5 : tier==='med'?0.28 : 0.12; }
+
+  function pickTier(){
+    var r = Math.random();
+    if(r < 0.15) return 'high';
+    if(r < 0.55) return 'med';
+    return 'low';
+  }
+  function nextIntent(){
+    if(queue.length) return queue.shift();
+    if(simT > 2.5) starvedFlash = 0.8;   // queue ran dry while lanes were hungry
+    return { tier:pickTier(), origin:'plan' };
+  }
+  function newCar(){
+    var intent = nextIntent();
+    return { tier:intent.tier, origin:intent.origin, signalType:intent.signalType||null,
+             llm: intent.tier!=='low' && Math.random()<0.5,
+             stage:'BRANCH', t:0, x:ANCHOR.BRANCH-0.1,
+             branchMain:main, greenAt:0, enteredReview:0, attended:false, stale:0, staleFlag:false };
+  }
+  var lanes = [];
+  function setLanes(n){
+    while(lanes.length < n) lanes.push({ car:newCar() });
+    while(lanes.length > n) lanes.pop();
+  }
+
+  function fireSignal(){
+    var type = SIGNAL_TYPES[signalsFiled % SIGNAL_TYPES.length];
+    signals.push({ type:type, t:0 });
+    signalsFiled++;
+  }
+
+  function completeMerge(lane){
+    main++; verified++; mergeTimes.push(simT);
+    var gm = simT - lane.car.greenAt;
+    gmEMA = (gmEMA==null) ? gm : gmEMA*0.78 + gm*0.22;
+    commits.unshift({ tier: lane.car.tier });
+    if(commits.length > 8) commits.pop();
+    for(var i=0;i<lanes.length;i++){ if(lanes[i]!==lane && lanes[i].car.stage!=='BRANCH') lanes[i].car.staleFlag=true; }
+    lane.car = newCar();
+  }
+
+  function step(dt){
+    simT += dt;
+    var queueTarget = lanes.length * 2;
+
+    // Stage 1–2: Plan tops the queue toward lanes×2
+    planTimer += dt;
+    if(planTimer >= PLAN_INTERVAL){ planTimer = 0; if(queue.length < queueTarget) queue.push({ tier:pickTier(), origin:'plan' }); }
+
+    // Stage 6: Maintain emits a post-merge signal on a cadence
+    maintainTimer += dt;
+    if(maintainTimer >= MAINTAIN_INTERVAL){ maintainTimer = 0; fireSignal(); }
+
+    // signals travel the return-pipe, then re-file to the FRONT of the queue
+    for(var si=signals.length-1; si>=0; si--){
+      signals[si].t += dt/SIGNAL_DUR;
+      if(signals[si].t >= 1){
+        queue.unshift({ tier: (signalsFiled % 2 ? 'high' : 'med'), origin:'signal', signalType:signals[si].type });
+        lampFlash[signals[si].type] = 0.9; hopperFlash = 0.9;
+        signals.splice(si,1);
+      }
+    }
+    for(var k in lampFlash){ lampFlash[k] = Math.max(0, lampFlash[k]-dt); }
+    starvedFlash = Math.max(0, starvedFlash-dt);
+    hopperFlash = Math.max(0, hopperFlash-dt);
+
+    // Stage 5: reviewer attention — high/med cars compete for WIP slots, FIFO
+    var qrev = [];
+    for(var i=0;i<lanes.length;i++){
+      var c=lanes[i].car; c.attended=false;
+      if(c.stage==='REVIEW' && c.tier!=='low') qrev.push(c);
+    }
+    qrev.sort(function(a,b){ return a.enteredReview-b.enteredReview; });
+    for(var q=0;q<qrev.length;q++) qrev[q].attended = q < WIP;
+    wipUsed = Math.min(WIP, qrev.length);
+    reviewDebt = Math.max(0, qrev.length - WIP);
+
+    for(var L=0;L<lanes.length;L++){
+      var lane=lanes[L], car=lane.car;
+      var target = ANCHOR[car.stage] != null ? ANCHOR[car.stage] : car.x;
+      car.x += (target - car.x) * Math.min(1, dt*3.5);
+
+      if(car.stage==='BRANCH'){
+        car.t += dt/BRANCH_DUR;
+        if(car.t>=1){ car.stage='BUILD'; car.t=0; }
+      } else if(car.stage==='BUILD'){
+        car.t += dt/(BUILD_DUR * (car.llm?1.3:1));   // Stage 4: LLM-touching also runs the eval gate
+        if(car.t>=1){ car.stage='REVIEW'; car.t=0; car.greenAt=simT; car.enteredReview=simT; }
+      } else if(car.stage==='REVIEW'){
+        if(car.tier==='low') car.t += dt/REVIEW_LOW;        // low self-merges — no reviewer needed
+        else if(car.attended) car.t += dt/REVIEW_DUR;        // only progresses under the beam
+        if(car.t>=1){ car.stage='REBASE'; car.t=0; car.stale = Math.max(0, main - car.branchMain); }
+      } else if(car.stage==='REBASE'){
+        car.t += dt/(REBASE_BASE + REBASE_PER*car.stale);
+        if(car.t>=1){ car.stage='MERGE'; car.t=0; }
+      } else if(car.stage==='MERGE'){
+        car.t += dt/MERGE_DUR;
+        if(car.t>=1){ completeMerge(lane); }
+      }
+    }
+
+    sparkAcc += dt;
+    if(sparkAcc >= 0.4){ sparkAcc=0; sparkSamples.push(gmEMA==null?0:gmEMA); if(sparkSamples.length>59) sparkSamples.shift(); }
+  }
+
+  // ---- rendering ----
+  var sceneEl = document.getElementById('scene');
+
+  function txt(x,y,z,str,size,color,anchor,weight){
+    var s=iso(x,y,z);
+    return '<text x="'+s[0].toFixed(1)+'" y="'+s[1].toFixed(1)+'" font-size="'+size+'" fill="'+color+'" '+
+      'text-anchor="'+(anchor||'middle')+'" font-weight="'+(weight||500)+'" letter-spacing="0.5" style="paint-order:stroke;stroke:'+PAL.badgeBg+';stroke-width:2.6px;stroke-linejoin:round">'+str+'</text>';
+  }
+  function txtScreen(sx,sy,str,size,color,anchor,weight){
+    return '<text x="'+sx.toFixed(1)+'" y="'+sy.toFixed(1)+'" font-size="'+size+'" fill="'+color+'" '+
+      'text-anchor="'+(anchor||'middle')+'" font-weight="'+(weight||500)+'" letter-spacing="0.5" style="paint-order:stroke;stroke:'+PAL.badgeBg+';stroke-width:2.6px;stroke-linejoin:round">'+str+'</text>';
+  }
+  function disc(x,y,z,r,fill){ var s=iso(x,y,z); return '<circle cx="'+s[0].toFixed(1)+'" cy="'+s[1].toFixed(1)+'" r="'+r+'" fill="'+fill+'" stroke="'+PAL.stroke+'" stroke-width="1"/>'; }
+  function glowDisc(x,y,z,r,fill){ var s=iso(x,y,z); return '<circle cx="'+s[0].toFixed(1)+'" cy="'+s[1].toFixed(1)+'" r="'+(r*2.4)+'" fill="'+fill+'" opacity="0.18"/>'+disc(x,y,z,r,fill); }
+
+  function carPose(car, i){
+    if(car.stage==='MERGE'){
+      var ly=laneY(i), t=car.t;
+      return { x: car.x + (MERGE_X-0.1-car.x)*Math.min(1,t*1.3), y: ly + (TRUNK_Y+0.08 - ly)*t, z: Math.sin(t*Math.PI)*2.2 };
+    }
+    return { x: car.x, y: laneY(i)-0.02, z: 0.14 };
+  }
+
+  function render(){
+    var solids=[];
+
+    // --- Plan hopper (upstream of all lanes) ---
+    solids.push(box(-2.0, -0.2, 0, 1.1, 9.2, 0.55, PAL.plan));
+    // queued intent cards stacked in the hopper
+    var shown = Math.min(queue.length, 9);
+    for(var qi=0; qi<shown; qi++){
+      var it = queue[qi], cm = (it.origin==='signal') ? PAL.card : mat(shade(PAL.tbase[it.tier], .32), PAL.stroke);
+      solids.push(box(-1.85, 0.2 + qi*0.95, 0.55, 0.78, 0.7, cardH(it.tier), cm));
+    }
+
+    // --- trunk + lanes + pads ---
+    solids.push(box(-2, TRUNK_Y, 0, 15, 0.95, 0.32, PAL.trunk));
+    for(var i=0;i<lanes.length;i++) solids.push(box(ANCHOR.BRANCH-0.6, laneY(i), 0, 12.6, 0.8, 0.14, PAL.track));
+    var sta=['BUILD','REVIEW','REBASE','MERGE'];
+    for(var i2=0;i2<lanes.length;i2++) for(var s2=0;s2<sta.length;s2++){ var ax=ANCHOR[sta[s2]]; solids.push(box(ax-0.55, laneY(i2)-0.02, 0.14, 1.1, 0.84, 0.05, PAL.pad)); }
+
+    // --- crane + reviewer + Maintain monitor ---
+    solids.push(box(MERGE_X+0.15, TRUNK_Y-0.2, 0, 0.3, 0.3, 3.0, PAL.crane));
+    solids.push(box(MERGE_X+0.15, laneY(lanes.length-1)-0.1, 2.7, 0.3, (TRUNK_Y-laneY(lanes.length-1))+0.4, 0.26, PAL.crane));
+    solids.push(box(6.3, TRUNK_Y+1.25, 0, 1.5, 0.75, 1.35, PAL.op));
+    solids.push(box(11.3, TRUNK_Y+1.05, 0, 1.4, 0.7, 1.5, PAL.monitor));
+
+    // --- commits on trunk ---
+    for(var ci=0;ci<commits.length;ci++){
+      var tb=PAL.tbase[commits[ci].tier];
+      var comMat = { top:shade(tb,0), right:shade(tb,-.22), left:shade(tb,-.38), stroke:PAL.stroke };
+      solids.push(box(MERGE_X - 0.05 - ci*1.0, TRUNK_Y+0.08, 0.32, 0.82, 0.78, 0.62, comMat));
+    }
+
+    // --- cars (+ intent card riding during plan/build) ---
+    for(var L=0;L<lanes.length;L++){
+      var car=lanes[L].car, pose=carPose(car,L);
+      solids.push(box(pose.x, pose.y, pose.z, 0.9, 0.78, 0.66, PAL.tier[car.tier]));
+      if(car.stage==='BRANCH' || car.stage==='BUILD'){
+        var cm2 = mat(shade(PAL.tbase[car.tier], .32), PAL.stroke);
+        solids.push(box(pose.x+0.1, pose.y+0.12, pose.z+0.66, 0.68, 0.52, cardH(car.tier), cm2));
+        if(car.tier==='high') solids.push(box(pose.x+0.18, pose.y+0.18, pose.z+0.66+cardH('high'), 0.5, 0.38, 0.18, cm2));
+      }
+    }
+
+    solids.sort(function(a,b){ return a.depth-b.depth; });
+    var out=[]; for(var oi=0;oi<solids.length;oi++) out.push(solids[oi].svg);
+
+    // ===== overlay layer =====
+    // return-pipe (Maintain → Plan): faint static arc + travelling signal tokens
+    var mTop = iso(11.9, TRUNK_Y+1.2, 1.6);
+    var hTop = iso(-1.4, 0.8, 0.7);
+    var ctrl = [ (mTop[0]+hTop[0])/2, Math.max(14, Math.min(mTop[1],hTop[1]) - 150) ];
+    function bez(t){ var u=1-t; return [ u*u*mTop[0]+2*u*t*ctrl[0]+t*t*hTop[0], u*u*mTop[1]+2*u*t*ctrl[1]+t*t*hTop[1] ]; }
+    out.push('<path d="M'+mTop[0].toFixed(1)+','+mTop[1].toFixed(1)+' Q'+ctrl[0].toFixed(1)+','+ctrl[1].toFixed(1)+' '+hTop[0].toFixed(1)+','+hTop[1].toFixed(1)+'" fill="none" stroke="'+PAL.signal+'" stroke-width="1.4" stroke-dasharray="2 6" opacity="0.4"/>');
+    for(var sg=0; sg<signals.length; sg++){
+      var pt=bez(signals[sg].t);
+      out.push('<circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="11" fill="'+PAL.signal+'" opacity="0.18"/>'+
+               '<circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="4.5" fill="'+PAL.signal+'" stroke="'+PAL.badgeBg+'" stroke-width="1.5"/>');
+      if(signals[sg].t < 0.55) out.push(txtScreen(pt[0], pt[1]-13, signals[sg].type, 10, PAL.signal, 'middle', 700));
+    }
+
+    // reviewer beams to attended cars
+    var opTop = iso(7.05, TRUNK_Y+1.25, 1.35);
+    for(var b=0;b<lanes.length;b++){
+      var bc=lanes[b].car;
+      if(bc.stage==='REVIEW' && bc.attended && bc.tier!=='low'){
+        var ct=iso(bc.x+0.45, laneY(b)+0.4, 0.95);
+        out.push('<line x1="'+opTop[0].toFixed(1)+'" y1="'+opTop[1].toFixed(1)+'" x2="'+ct[0].toFixed(1)+'" y2="'+ct[1].toFixed(1)+'" stroke="'+PAL.beam+'" stroke-width="7" opacity="0.22" stroke-linecap="round"/>');
+        out.push('<line x1="'+opTop[0].toFixed(1)+'" y1="'+opTop[1].toFixed(1)+'" x2="'+ct[0].toFixed(1)+'" y2="'+ct[1].toFixed(1)+'" stroke="'+PAL.beam+'" stroke-width="1.5" opacity="0.7" stroke-linecap="round"/>');
+      }
+    }
+
+    // per-car lamps + badges
+    for(var L2=0;L2<lanes.length;L2++){
+      var c=lanes[L2].car, pose2=carPose(c,L2), cx=pose2.x+0.45, cz=pose2.z+0.66;
+      if(c.stage==='BUILD'){ out.push(glowDisc(cx, pose2.y+0.4, cz+0.5, 5, PAL.lampR));
+        if(c.llm) out.push(txt(cx, pose2.y+0.4, cz+1.1, 'build + eval', 9.5, PAL.lampA, 'middle', 700)); }
+      else if(c.stage!=='BRANCH'){ out.push(glowDisc(cx, pose2.y+0.4, cz+0.5, 5, PAL.lampG)); }
+      if(c.origin==='signal' && (c.stage==='BRANCH'||c.stage==='BUILD'))
+        out.push(txt(cx, pose2.y+0.4, cz+1.5, '◆ re-filed', 9.5, PAL.signal, 'middle', 700));
+      if(c.stage==='REVIEW' && !c.attended && c.tier!=='low')
+        out.push(txt(cx, pose2.y+0.4, cz+1.15, 'HOLD', 12, PAL.lampR, 'middle', 700));
+      if((c.stage==='REBASE' && c.stale>0) || (c.staleFlag && (c.stage==='BUILD'||c.stage==='REVIEW')))
+        out.push(txt(cx, pose2.y+0.4, cz+(c.stage==='REVIEW'?1.55:1.15), '↻ rebase', 11, PAL.tbase.med, 'middle', 700));
+    }
+
+    // fixtures glow + labels
+    out.push(glowDisc(7.05, TRUNK_Y+1.25, 1.52, 5, PAL.beam));
+    out.push(txt(7.05, TRUNK_Y+1.25, 2.0, 'REVIEWER', 11, PAL.text, 'middle', 700));
+    out.push(txt(7.05, TRUNK_Y+1.25, 1.62, wipUsed+' / '+WIP+' streams', 10, PAL.textDim, 'middle', 500));
+
+    // monitor lamps (CI / eval / cost / trace)
+    for(var ml=0; ml<4; ml++){
+      var on = lampFlash[SIGNAL_TYPES[ml]] > 0;
+      out.push(disc(11.45+ml*0.35, TRUNK_Y+1.35, 1.55, 4, on?PAL.signal:PAL.textDim));
+    }
+    out.push(txt(12.0, TRUNK_Y+1.4, 1.95, 'MAINTAIN', 11, PAL.text, 'middle', 700));
+
+    // hopper label
+    var hc = hopperFlash>0 ? PAL.accent : PAL.text;
+    out.push(txt(-1.45, 4.6, 1.1, 'PLAN → intent.md', 12, hc, 'middle', 700));
+    if(queue.length>9) out.push(txt(-1.85, 0.2+9*0.95, 1.2, '+'+(queue.length-9), 11, PAL.textDim, 'middle', 700));
+
+    // trunk + stage labels
+    out.push(txt(-1.4, TRUNK_Y+0.45, 0.9, 'main', 15, PAL.text, 'start', 700));
+    out.push(txt(MERGE_X-0.05, TRUNK_Y+0.45, 2.15, '#'+main, 13, PAL.beam, 'middle', 700));
+    var stl=[['BRANCH','branch'],['BUILD','build + test'],['REVIEW','review'],['REBASE','rebase'],['MERGE','merge']];
+    for(var sl=0; sl<stl.length; sl++) out.push(txt(ANCHOR[stl[sl][0]], laneY(0)-1.15, 0.2, stl[sl][1], 11, PAL.textDim, 'middle', 500));
+    for(var ll=0; ll<lanes.length; ll++) out.push(txt(ANCHOR.BRANCH-1.3, laneY(ll)+0.4, 0.5, 'L'+(ll+1), 11, PAL.textDim, 'middle', 600));
+
+    sceneEl.innerHTML = out.join('');
+  }
+
+  // ---- gauges ----
+  var el = function(id){ return document.getElementById(id); };
+  function updateGauges(){
+    var queueTarget = lanes.length*2;
+    el('g-queue').textContent = queue.length+' / '+queueTarget;
+    el('g-queue').style.color = (queue.length===0 || starvedFlash>0) ? 'var(--crit)' : 'var(--ink)';
+    el('g-q-tag').className = 'tag '+((queue.length===0||starvedFlash>0)?'crit':'ok');
+    el('g-q-tag').textContent = (queue.length===0||starvedFlash>0)?'starved':'healthy';
+
+    el('g-og').innerHTML = BUILD_DUR.toFixed(1)+'<span class="unit">s</span>';
+    var gm = gmEMA;
+    el('g-gm').innerHTML = (gm==null?'—':gm.toFixed(1))+'<span class="unit">s</span>';
+    var gmState = gm==null?0 : (gm<5?0 : gm<9?1 : 2);
+    el('g-gm-tag').className = 'tag '+(gmState===0?'ok':gmState===1?'warn':'crit');
+    el('g-gm-tag').textContent = gmState===0?'ok':gmState===1?'rising':'stalled';
+
+    var cutoff = simT-10; while(mergeTimes.length && mergeTimes[0]<cutoff) mergeTimes.shift();
+    el('g-merges').innerHTML = verified+'<span class="unit" id="g-rate"></span>';
+    el('g-rate').textContent = '  '+((mergeTimes.length/10)*60).toFixed(0)+'/min';
+
+    el('g-wip').textContent = wipUsed+' / '+WIP;
+    el('g-wip-tag').className='tag '+(wipUsed>=WIP?'warn':'ok'); el('g-wip-tag').textContent = wipUsed>=WIP?'maxed':'free';
+    el('g-debt').textContent = reviewDebt;
+    el('g-debt').style.color = reviewDebt>0 ? 'var(--crit)' : 'var(--ink)';
+    el('g-signals').textContent = signalsFiled;
+
+    if(sparkSamples.length>1){
+      var maxv=1; for(var i=0;i<sparkSamples.length;i++) if(sparkSamples[i]>maxv) maxv=sparkSamples[i];
+      var W=240,H=30, n=sparkSamples.length, pts=[];
+      for(var j=0;j<n;j++){ pts.push(((j/(n-1))*W).toFixed(1)+','+(H-2-(sparkSamples[j]/maxv)*(H-5)).toFixed(1)); }
+      var col = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#0e8fa3';
+      el('spark').innerHTML = '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+col+'" stroke-width="1.5" stroke-linejoin="round"/>'+
+        '<circle cx="'+W+'" cy="'+(H-2-(sparkSamples[n-1]/maxv)*(H-5)).toFixed(1)+'" r="2.5" fill="'+col+'"/>';
+    }
+  }
+
+  // ---- loop ----
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var playing = !reduced, speed = 2, last=0, pending=0;
+  function frame(ts){
+    if(!last) last=ts;
+    var dt0=(ts-last)/1000; last=ts;
+    var dt = playing ? Math.min(0.05, dt0)*speed : 0;
+    if(pending>0){ dt=pending; pending=0; }
+    if(dt>0) step(dt);
+    render(); updateGauges();
+    requestAnimationFrame(frame);
+  }
+  setLanes(1);
+  requestAnimationFrame(frame);
+
+  // ---- controls ----
+  var btnPlay=el('btn-play');
+  function syncPlay(){ btnPlay.textContent = playing?'❙❙ Pause':'▶ Run'; }
+  syncPlay();
+  btnPlay.addEventListener('click', function(){ playing=!playing; syncPlay(); });
+  el('btn-step').addEventListener('click', function(){ pending=0.4; });
+  el('btn-signal').addEventListener('click', function(){ fireSignal(); if(!playing){ pending=0.1; } });
+  el('speed').addEventListener('change', function(e){ speed=parseFloat(e.target.value); });
+  var lanesInput=el('lanes'), lanesN=el('lanes-n');
+  lanesInput.addEventListener('input', function(e){ var n=parseInt(e.target.value,10); setLanes(n); lanesN.textContent=n; });
+
+  if(window.matchMedia){ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refreshPal); }
+  new MutationObserver(refreshPal).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+})();
+</script>
