@@ -45,16 +45,16 @@ Two ideas the machine is built to make *obvious*:
 
 ## Mapping to the Anthropic *AI-Native SDLC Playbook*
 
-The machine traces all six stages of Anthropic's [AI-Native SDLC Playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) (Louis Claxton, Aug 2026):
+The machine traces all six stages — simplified — of Anthropic's [AI-Native SDLC Playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) (Louis Claxton, Aug 2026):
 
 | Stage | In the machine |
 |---|---|
 | **1 · Plan** | the hopper stamps an `intent.md` and feeds the queue |
-| **2 · Design** | the intent is sized by tier (a heavy artifact for high-risk, a thin slip for low) |
-| **3 · Build** | branch → CI build |
-| **4 · Test** | build goes green + an eval gate on LLM-touching changes |
-| **5 · Deploy** | review → rebase → merge, gated by tier (human for high/medium) |
-| **6 · Maintain** | a post-merge signal becomes a fresh intent, re-filed to the front of the queue |
+| **2 · Design** | `intent.md` expands to `spec.md`; planning weight scales with risk tier (local) |
+| **3 · Build** | plan mode → committed `plan.md` → diff + tests on a branch (`CLAUDE.md`, skills, hooks named but not drawn) |
+| **4 · Test** | build goes green; changes to `CLAUDE.md`/skills/hooks run the eval suite; each fixed breach adds a regression eval |
+| **5 · Deploy** | PR review → rebase → merge, human approval for high/medium; no release gate yet |
+| **6 · Maintain** | post-merge signals against control bands: 1σ log, 2σ read-only diagnosis, 3σ → fresh `intent.md` at the front of the queue |
 
 ### Where it aligns
 
@@ -63,7 +63,9 @@ The single most faithful element is the **review-bandwidth ceiling**. The playbo
 ### Where it honestly diverges (read these twice)
 
 - **Risk tiers are an extension, not a playbook construct.** The playbook prescribes `intent.md` + plan-mode-as-default; the high/medium/low *classifier* that routes planning weight and merge authority is a local adaptation for a blast-radius-sensitive codebase. Aligned in spirit with "human review reserved for regulated and critical code" — but don't claim the playbook mandates it.
-- **The human gate sits at *merge*, not *deploy*.** The playbook's approval hook is a release gate. If you have no production deployment yet, relocate that gate to the merge boundary and say so — same principle, one boundary upstream. The Maintain loop is likewise *adapted*: it draws from post-merge signals (nightly CI, eval regressions, cost drift, traces), not a live prod environment.
+- **There's a merge gate but no release gate.** The playbook gates at both: code-owner approval at merge, and an approval hook (with dev/staging/prod autonomy tiers) at release. The machine stops at merge because there's no production deploy yet. The Maintain loop is likewise *adapted*: it draws from post-merge signals (nightly CI, eval regressions, cost drift, traces), not a live prod environment.
+- **Rebase is an extension.** The playbook doesn't cover rebasing or merge conflicts; its answer to parallel sessions colliding is one worktree per session. The fitter is here because the trunk-moves-while-you-work cost is real git behavior worth seeing, not because the playbook describes it.
+- **Simplified, not complete.** The artifact chain (`intent.md → spec.md → plan.md → diff+tests → PR → incident`) appears only as labels. `CLAUDE.md`, skills, hooks-as-gates, `REVIEW.md`, managed settings and the 2σ/3σ split between "open a PR" and "run a runbook" aren't modeled. "Front of the queue" for breaches is a local priority rule.
 - **Low-tier self-merge is a local deviation.** The playbook keeps code-owner approval on every PR ("branch protection still requires approval from a code owner"; "the agent that wrote the code has no way to approve it"). The machine lets low-tier cars merge without the reviewer beam; the attested-SHA rule below narrows that risk but doesn't match the playbook.
 - **Don't let the picture oversell automation.** If Plan-feeds-queue and Maintain-auto-refiles are still design intent rather than shipped machinery, mark them as such. A diagram that shows everything running reads as "we do all this" when you don't yet.
 
@@ -93,9 +95,9 @@ Open `merge-works.html` and:
 
 - **Run / Pause / Step** — drive the simulation (Step is there for reduced-motion).
 - **Lanes (1–5)** — the key experiment. Push to 4–5 and watch `open→green` stay flat while `green→merge` balloons and **review debt** climbs red. That's the ceiling: the reviewer, not the machine.
-- **Fire prod signal** — manually trigger the Maintain loop; a signal travels the return-pipe back to the hopper and re-files a new intent.
+- **Fire 3σ breach** — manually trigger the Maintain loop; the breach travels the return-pipe back to the hopper and re-files a new intent. Background signals also land at 1σ (logged) and 2σ (read-only diagnosis), which don't re-file.
 
-The gauges — queue depth, open→green, green→merge, reviewer WIP, review debt, verified merges, signals re-filed — are all read live off the same model that draws the parts.
+The gauges — queue depth, open→green, green→merge, reviewer WIP, review debt, verified merges, 3σ breaches re-filed — are all read live off the same model that draws the parts.
 
 ---
 
