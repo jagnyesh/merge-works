@@ -144,7 +144,7 @@
 <div class="wrap">
   <p class="eyebrow">Fig. 1 — a machine whose working is the concept</p>
   <h1>The Merge Works <span class="sub">/ the AI-Native SDLC, as one running machine</span></h1>
-  <p class="lede">A branch is a <b>car on its own lane</b>; <code style="font-family:var(--mono)">main</code> is the <b>trunk line</b> at the front. The loop runs from intent to merge and back: the <b style="color:var(--accent)">Plan hopper</b> releases a product-owner-accepted, tier-sized <code style="font-family:var(--mono)">intent.md</code> and feeds the queue, and the <b style="color:var(--accent)">Maintain monitor</b> turns a confirmed 3σ breach back into a fresh intent. Every gauge is read straight off the machine. All six Anthropic <i>AI-Native SDLC</i> stages, simplified — the parts list marks what is the playbook's and what is local.</p>
+  <p class="lede">A branch is a <b>car on its own lane</b>; <code style="font-family:var(--mono)">main</code> is the <b>trunk line</b> at the front. The loop runs from intent to merge and back: the <b style="color:var(--accent)">Plan hopper</b> releases a product-owner-accepted, tier-sized <code style="font-family:var(--mono)">intent.md</code> and feeds the queue, and the <b style="color:var(--accent)">Maintain monitor</b> writes each 2σ or 3σ breach back as a fresh intent. Every gauge is read straight off the machine. All six Anthropic <i>AI-Native SDLC</i> stages, simplified — the parts list marks what is the playbook's and what is local.</p>
 
   <ol class="ribbon">
     <li><span class="n">STAGE 1</span><span class="s">Plan</span><span class="p">product owner accepts <code style="font-family:var(--mono)">intent.md</code> → queue</span></li>
@@ -152,14 +152,14 @@
     <li><span class="n">STAGE 3</span><span class="s">Build</span><span class="p">plan mode → <code style="font-family:var(--mono)">plan.md</code> → diff + tests</span></li>
     <li><span class="n">STAGE 4</span><span class="s">Test</span><span class="p">build goes green; config changes run evals</span></li>
     <li><span class="n">STAGE 5</span><span class="s">Deploy</span><span class="p">AI review on every PR → human for high/med → merge (no release gate yet)</span></li>
-    <li><span class="n">STAGE 6</span><span class="s">Maintain</span><span class="p">control bands: 3σ → confidence gate → new intent</span></li>
+    <li><span class="n">STAGE 6</span><span class="s">Maintain</span><span class="p"><a href="control-bands/" style="color:inherit">control bands</a>: 2σ/3σ breach → new intent</span></li>
   </ol>
 
   <div class="instrument">
     <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
 
     <div class="stage-wrap">
-      <svg id="stage" viewBox="0 0 1000 680" role="img" aria-label="Isometric animation: a Plan hopper feeds intent cards into a queue; pull-request cars move along parallel lanes through build, review, rebase and merge onto the main trunk; a Maintain monitor sends 3σ control-band breaches back to the hopper as new intents.">
+      <svg id="stage" viewBox="0 0 1000 680" role="img" aria-label="Isometric animation: a Plan hopper feeds intent cards into a queue; pull-request cars move along parallel lanes through build, review, rebase and merge onto the main trunk; a Maintain monitor sends 2σ and 3σ control-band breaches back to the hopper as new intents.">
         <g id="scene"></g>
       </svg>
     </div>
@@ -202,9 +202,9 @@
         <div class="note">the only output that counts (a local metric, not the article's).</div>
       </div>
       <div class="gauge">
-        <div class="lbl"><span>3σ breaches re-filed</span><span class="tag" id="g-sig-tag" style="color:var(--accent)">maintain</span></div>
+        <div class="lbl"><span>breaches re-filed</span><span class="tag" id="g-sig-tag" style="color:var(--accent)">maintain</span></div>
         <div class="val" id="g-signals">0</div>
-        <div class="note" id="g-sig-note">1σ log · 2σ diagnose · 3σ → confidence gate → intent.md</div>
+        <div class="note" id="g-sig-note">1σ log · 2σ diagnose · 3σ propose · each → intent.md</div>
       </div>
     </aside>
 
@@ -247,19 +247,19 @@
           <tr><td><span class="chip" style="background:#3f8fa6"></span>Plan hopper</td><td>releases <code>intent.md</code> + <code>spec.md</code> at the rate a product owner accepts them (the accept is the merge of <code>intent.md</code>), feeds the queue</td><td>①② Plan·Design · human accept</td></tr>
           <tr><td><span class="chip" style="background:#cdd6df;border-color:#9aa6b2"></span>Intent card</td><td>planning weight — card height = tier</td><td>ADR · PR block · issue body (local)</td></tr>
           <tr><td><span class="chip" style="background:#97a3b1"></span>A lane</td><td>one branch, one PR, one issue. Starts from a committed <code>plan.md</code> (plan mode); <code>CLAUDE.md</code>, skills and hooks shape the build but aren't drawn</td><td>③ Build · worktree per session</td></tr>
-          <tr><td><span class="chip" style="background:#30b968;border-color:#1f9d57"></span>Build lamp + eval</td><td>CI red→green. Changes to <code>CLAUDE.md</code>, skills or hooks also run the eval suite; each fixed 3σ breach adds a regression eval</td><td>④ Test · feedback loop + continuous evals</td></tr>
+          <tr><td><span class="chip" style="background:#30b968;border-color:#1f9d57"></span>Build lamp + eval</td><td>CI red→green. Changes to <code>CLAUDE.md</code>, skills or hooks also run the eval suite; each shipped breach fix adds an eval for the incident</td><td>④ Test · feedback loop + continuous evals</td></tr>
           <tr><td><span class="chip" style="background:#e0a24e"></span>“AI review” tag</td><td>agentic review of every PR against <code>REVIEW.md</code>; findings inform, never approve</td><td>⑤ Deploy · layered agentic review</td></tr>
           <tr><td><span class="chip" style="background:#1fb7cb"></span>Reviewer beam</td><td>human code-owner review + merge approval</td><td>⑤ Deploy · human for high/med; low self-merges (local deviation)</td></tr>
           <tr><td><span class="chip" style="background:#e0943a"></span>The fitter</td><td>rebase onto the <i>current</i> trunk tip</td><td>local extension — the playbook doesn't cover rebase</td></tr>
           <tr><td><span class="chip" style="background:#5c6675"></span>Crane</td><td>the merge — locks car onto trunk</td><td>⑤ <code>main</code> advances</td></tr>
-          <tr><td><span class="chip" style="background:#cf412c"></span>Maintain monitor</td><td>deterministic control bands: 1σ log, 2σ read-only diagnosis, 3σ → independent confidence gate → <code>intent.md</code> (or escalate to a human)</td><td>⑥ Maintain · post-merge signals, not prod</td></tr>
+          <tr><td><span class="chip" style="background:#cf412c"></span>Maintain monitor</td><td>deterministic control bands: 1σ log, 2σ read-only diagnosis, 3σ may propose a PR or pre-approved runbook; each 2σ/3σ diagnosis is written as <code>intent.md</code></td><td>⑥ Maintain · post-merge signals, not prod</td></tr>
         </tbody>
       </table>
     </div>
     <div class="thesis">
       <h2>What we're trying to achieve</h2>
       <p><b>A merge is the lock-on.</b> Until the crane lifts it, a car is a reversible proposal on its own lane. The crane is the one irreversible step — the commit becomes shared history everyone branches from. And the trunk <i>moves while you work</i>: every merge forces the other in-flight cars through the <b>fitter</b> (rebase) before their own lock-on. That reconciliation is the tax parallel work pays.</p>
-      <p><b>Now the loop closes.</b> The <b style="color:var(--accent)">Plan hopper</b> keeps the queue topped to <b>lanes×2</b> (queue health), stamping each intent at its tier weight — a high-risk car carries a tall ADR stack, a low-risk one a thin slip. Every merge pulls the next intent. And the <b style="color:var(--crit)">Maintain monitor</b> watches post-merge signals — nightly CI, an eval regression, cost drift, a trace — against deterministic control bands. 1σ is logged, 2σ gets a read-only diagnosis, and only a 3σ breach becomes a fresh <code style="font-family:var(--mono)">intent.md</code> that jumps to the <i>front</i> of the queue (a local priority rule). That is the playbook's <i>“a breached control band in production writes the next <code>intent.md</code>.”</i></p>
+      <p><b>Now the loop closes.</b> The <b style="color:var(--accent)">Plan hopper</b> keeps the queue topped to <b>lanes×2</b> (queue health), stamping each intent at its tier weight — a high-risk car carries a tall ADR stack, a low-risk one a thin slip. Every merge pulls the next intent. And the <b style="color:var(--crit)">Maintain monitor</b> watches post-merge signals — nightly CI, an eval regression, cost drift, a trace — against deterministic control bands. 1σ is logged; at 2σ Claude diagnoses read-only, and at 3σ it may also propose a PR or a pre-approved runbook. Either way the diagnosis is written as a fresh <code style="font-family:var(--mono)">intent.md</code> that jumps to the <i>front</i> of the queue (a local priority rule). That is the playbook's <i>“a breached control band in production writes the next <code>intent.md</code>.”</i> <a href="control-bands/" style="color:inherit">See the control-band figure</a> for how detection, tiers and triage work.</p>
       <p><b>Honest adaptation:</b> the playbook gates at <i>merge</i> (code-owner approval) <i>and</i> at <i>release</i> (an approval hook, with dev/staging/prod autonomy tiers). This machine stops at merge: there's no release gate because there's no production deploy yet, so the return-pipe draws from <i>post-merge</i> signals instead of a prod environment.</p>
       <p><b>The ceiling isn't the machine — it's the beam.</b> Pull Lanes to 4–5. Builds still go green (<code>open→green</code> holds), but <span class="big">green→merge climbs</span> and cars start to <b>HOLD</b>: one reviewer covers <b>WIP 2</b>, and faster models just feed more cars into that queue. The beam is fixed; <b>the share of cars that need it is what you tune</b>. That is the playbook's move — layered agentic review on every PR, “human review reserved for regulated and critical code” — so at 5 lanes, flip <b>Needs human</b> from 85% to 30%: green→merge drops and merges per minute rise, with the same single reviewer. Push it too low and you're shipping under-reviewed, which is the other half of the same warning. The target is <b class="big">verified merges per week</b>: add lanes only while the beam still reaches every car that needs it.</p>
     </div>
@@ -334,7 +334,7 @@
   var ANCHOR = { BRANCH:0.9, BUILD:4, REVIEW:7, REBASE:9.5, MERGE:12 };
   var MERGE_X = 12.4;
   var BUILD_DUR=2.5, BRANCH_DUR=0.7, REVIEW_DUR=3.2, REVIEW_LOW=1.1, REBASE_BASE=0.9, REBASE_PER=0.65, MERGE_DUR=1.0;
-  var WIP = 2, AI_REVIEW_DUR=0.6, CONF_PASS=0.8, PLAN_INTERVAL=0.7, MAINTAIN_INTERVAL=6.5, SIGNAL_DUR=1.5;
+  var WIP = 2, AI_REVIEW_DUR=0.6, PLAN_INTERVAL=0.7, MAINTAIN_INTERVAL=6.5, SIGNAL_DUR=1.5;
   var SIGNAL_TYPES = ['nightly CI','eval regression','cost drift','trace anomaly'];
 
   var main = 0, simT = 0, verified = 0;
@@ -343,7 +343,7 @@
   var reviewDebt = 0, wipUsed = 0;
   var queue = [], planTimer = 0, maintainTimer = 0, signalsFiled = 0;
   var signals = [], lampFlash = {}, starvedFlash = 0, hopperFlash = 0;
-  var signalSeq = 0, bandLog = {1:0,2:0,3:0}, diagFlash = 0, evalTasks = 20, escalated = 0;
+  var signalSeq = 0, bandLog = {1:0,2:0,3:0}, diagFlash = 0, evalTasks = 20;
   var humanShare = 0.55, humanMerged = 0;
 
   function laneY(i){ return 8 - i*2; }
@@ -379,7 +379,7 @@
     var type = SIGNAL_TYPES[signalSeq++ % SIGNAL_TYPES.length];
     bandLog[sigma]++; lampFlash[type] = 0.9;
     if(sigma===2) diagFlash = 1.4;
-    if(sigma===3) signals.push({ type:type, t:0 });
+    if(sigma>=2) signals.push({ type:type, t:0, sigma:sigma });   // diagnosis is written as intent.md at 2σ and 3σ
   }
 
   function completeMerge(lane){
@@ -406,14 +406,12 @@
     maintainTimer += dt;
     if(maintainTimer >= MAINTAIN_INTERVAL){ maintainTimer = 0; fireSignal(pickSigma()); }
 
-    // 3σ breaches travel the return-pipe, then re-file to the FRONT of the queue (local priority rule)
+    // 2σ/3σ breaches travel the return-pipe, then re-file to the FRONT of the queue (local priority rule)
     for(var si=signals.length-1; si>=0; si--){
       signals[si].t += dt/SIGNAL_DUR;
       if(signals[si].t >= 1){
-        // independent confidence gate: unconfirmed findings escalate to a human instead of re-filing
-        if(Math.random() > CONF_PASS){ escalated++; signals.splice(si,1); continue; }
         signalsFiled++;
-        queue.unshift({ tier: (signalsFiled % 2 ? 'high' : 'med'), origin:'signal', signalType:signals[si].type });
+        queue.unshift({ tier: (signals[si].sigma===3 ? 'high' : 'med'), origin:'signal', signalType:signals[si].type });
         lampFlash[signals[si].type] = 0.9; hopperFlash = 0.9;
         signals.splice(si,1);
       }
@@ -625,7 +623,7 @@
     el('g-debt').textContent = reviewDebt;
     el('g-debt').style.color = reviewDebt>0 ? 'var(--crit)' : 'var(--ink)';
     el('g-signals').textContent = signalsFiled;
-    el('g-sig-note').textContent = '1σ log '+bandLog[1]+' · 2σ diagnosed '+bandLog[2]+' · escalated '+escalated+' · evals '+evalTasks;
+    el('g-sig-note').textContent = '1σ log '+bandLog[1]+' · 2σ diagnosed '+bandLog[2]+' · 3σ proposed '+bandLog[3]+' · evals '+evalTasks;
     el('g-share').textContent = verified ? Math.round(100*humanMerged/verified)+'%' : '—';
 
     if(sparkSamples.length>1){

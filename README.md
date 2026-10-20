@@ -34,7 +34,7 @@ The core move is to pick a physical metaphor that is *load-bearing*, not decorat
 | **The fitter** (amber) | `git rebase` onto the *current* trunk tip. |
 | **Crane** | the merge itself — lifts a car and locks it onto the trunk. |
 | **Plan hopper** (upstream) | the planning step: stamps an `intent.md`, sized by tier, into a queue. |
-| **Maintain monitor + return-pipe** | post-merge signals (CI, eval, cost, trace) that re-file a new intent. |
+| **Maintain monitor + return-pipe** | post-merge signals (CI, eval, cost, trace); a 2σ or 3σ breach re-files a new intent. |
 
 Two ideas the machine is built to make *obvious*:
 
@@ -52,9 +52,9 @@ The machine traces all six stages — simplified — of Anthropic's [AI-Native S
 | **1 · Plan** | the hopper releases `intent.md` files at the rate a product owner accepts them |
 | **2 · Design** | `intent.md` expands to `spec.md`; planning weight scales with risk tier (local) |
 | **3 · Build** | plan mode → committed `plan.md` → diff + tests on a branch (`CLAUDE.md`, skills, hooks named but not drawn) |
-| **4 · Test** | build goes green; changes to `CLAUDE.md`/skills/hooks run the eval suite; each fixed breach adds a regression eval |
+| **4 · Test** | build goes green; changes to `CLAUDE.md`/skills/hooks run the eval suite; each shipped breach fix adds an eval for the incident |
 | **5 · Deploy** | agentic review on every PR → human code-owner review for high/medium → rebase → merge; no release gate yet |
-| **6 · Maintain** | post-merge signals against control bands: 1σ log, 2σ read-only diagnosis, 3σ → independent confidence gate → fresh `intent.md` at the front of the queue (or escalate to a human) |
+| **6 · Maintain** | post-merge signals against deterministic control bands: 1σ log, 2σ read-only diagnosis, 3σ may propose a PR or pre-approved runbook; the diagnosis is written as a fresh `intent.md` at the front of the queue (local priority rule) |
 
 ### Where it aligns
 
@@ -67,7 +67,7 @@ Two items in the safety lens below also match the playbook directly. *Never revi
 - **Risk tiers are an extension, not a playbook construct.** The playbook prescribes `intent.md` + plan-mode-as-default; the high/medium/low *classifier* that routes planning weight and merge authority is a local adaptation for a blast-radius-sensitive codebase. Aligned in spirit with "human review reserved for regulated and critical code" — but don't claim the playbook mandates it.
 - **There's a merge gate but no release gate.** The playbook gates at both: code-owner approval at merge, and an approval hook (with dev/staging/prod autonomy tiers) at release. The machine stops at merge because there's no production deploy yet. The Maintain loop is likewise *adapted*: it draws from post-merge signals (nightly CI, eval regressions, cost drift, traces), not a live prod environment.
 - **Rebase is an extension.** The playbook doesn't cover rebasing or merge conflicts; its answer to parallel sessions colliding is one worktree per session. The fitter is here because the trunk-moves-while-you-work cost is real git behavior worth seeing, not because the playbook describes it.
-- **Simplified, not complete.** The artifact chain (`intent.md → spec.md → plan.md → diff+tests → PR → incident`) appears only as labels. `CLAUDE.md`, skills, hooks-as-gates, `REVIEW.md`, managed settings and the 3σ alternatives to writing an `intent.md` (opening a PR into the review gate, or triggering a pre-approved runbook) aren't modeled. "Front of the queue" for breaches is a local priority rule.
+- **Simplified, not complete.** The artifact chain (`intent.md → spec.md → plan.md → diff+tests → PR → incident`) appears only as labels. `CLAUDE.md`, skills, hooks-as-gates, `REVIEW.md`, managed settings and the 3σ actions (opening a PR into the review gate, or triggering a pre-approved runbook) aren't modeled; the machine shows only the `intent.md` they also produce. "Front of the queue" for breaches is a local priority rule.
 - **Low-tier self-merge is a local deviation.** The playbook keeps code-owner approval on every PR ("branch protection still requires approval from a code owner"; "the agent that wrote the code has no way to approve it"). The machine lets low-tier cars merge without the reviewer beam; the attested-SHA rule below narrows that risk but doesn't match the playbook.
 - **Human acceptance is a rate, not a drawn step.** The playbook has a product owner review and commit `intent.md`, and a human decide whether `spec.md` proceeds. The machine models that as the hopper's release rate, not as a visible gate, and breach-generated intents skip it.
 - **Don't let the picture oversell automation.** If Plan-feeds-queue and Maintain-auto-refiles are still design intent rather than shipped machinery, mark them as such. A diagram that shows everything running reads as "we do all this" when you don't yet.
@@ -99,9 +99,11 @@ Open `index.html` and:
 - **Run / Pause / Step** — drive the simulation (Step is there for reduced-motion).
 - **Needs human (85 / 55 / 30%)** — the lever. At 5 lanes, go from 85% to 30% and watch green→merge drop and merges per minute rise: same beam, fewer cars that need it.
 - **Lanes (1–5)** — the key experiment. Push to 4–5 and watch `open→green` stay flat while `green→merge` climbs and cars start to **HOLD** for the reviewer. That's the ceiling: the reviewer, not the machine.
-- **Fire 3σ breach** — manually trigger the Maintain loop; the breach passes a confidence gate (~80% confirm; the rest escalate to a human) and travels the return-pipe back to the hopper as a new intent. Background signals also land at 1σ (logged) and 2σ (read-only diagnosis), which don't re-file.
+- **Fire 3σ breach** — manually trigger the Maintain loop; the breach travels the return-pipe back to the hopper as a new intent. Background signals land at 1σ (logged only), 2σ (read-only diagnosis) and 3σ; 2σ and 3σ both re-file, because the playbook writes every diagnosis as `intent.md`.
 
-The gauges — queue depth, open→green, green→merge, reviewer WIP, needs the human, review debt, verified merges, 3σ breaches re-filed — are all read live off the same model that draws the parts.
+The gauges — queue depth, open→green, green→merge, reviewer WIP, needs the human, review debt, verified merges, breaches re-filed — are all read live off the same model that draws the parts.
+
+`control-bands/` zooms into Stage 6: a top-down control-band recorder for the playbook's three Maintain examples (CI failure spike, post-deploy 5xx spike, PR cycle-time drift), with a triage queue you work as the service owner and an appendix in ASD-STE100 Simplified Technical English. Light theme: `control-bands/light.html`.
 
 ---
 
