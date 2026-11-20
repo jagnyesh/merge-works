@@ -1,3 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Merge Works: the AI-Native SDLC as one running machine</title>
+<meta name="description" content="An interactive isometric machine that explains git merges, parallel agent work and the six stages of the AI-Native SDLC.">
+<script>
+  // theme before first paint: saved choice, else the OS setting (shared with control-bands/)
+  (function(){ try{ var t=localStorage.getItem('merge-works-theme'); if(t==='light'||t==='dark') document.documentElement.setAttribute('data-theme',t); }catch(e){} })();
+</script>
 <style>
   :root{
     --paper:#eef2f6; --panel:#e4e9ef; --ink:#1b2129; --ink-dim:#5d6875;
@@ -27,7 +38,13 @@
   }
 
   *{ box-sizing:border-box; }
-  body{ margin:0; }
+  html{ color-scheme:light dark; background:var(--paper); }
+  :root[data-theme="light"]{ color-scheme:light; }
+  :root[data-theme="dark"]{ color-scheme:dark; }
+  body{ margin:0; background:var(--paper); }
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .topbar{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .theme-toggle{ font-size:11px; padding:5px 10px; flex:none; }
   .wrap{
     background:var(--paper); color:var(--ink); font-family:var(--sans);
     line-height:1.55; padding:clamp(18px,4vw,48px);
@@ -69,6 +86,13 @@
 
   .stage-wrap{ position:relative; }
   svg#stage{ display:block; width:100%; height:auto; }
+  .stage-hint{ display:none; font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-dim); padding:8px 12px 0; }
+  /* phones: keep the drawing at a readable scale and let it scroll sideways */
+  @media (max-width:720px){
+    .stage-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
+    svg#stage{ width:720px; max-width:none; }
+    .stage-hint{ display:block; }
+  }
   text{ font-family:var(--mono); }
 
   /* gauge cluster */
@@ -140,9 +164,14 @@
   .thesis .big{ font-family:var(--mono); color:var(--accent); font-size:14px; }
   .foot{ margin-top:36px; padding-top:16px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; color:var(--ink-dim); letter-spacing:.04em; }
 </style>
+</head>
+<body>
 
 <div class="wrap">
-  <p class="eyebrow">Fig. 1 — a machine whose working is the concept</p>
+  <div class="topbar">
+    <p class="eyebrow">Fig. 1 — a machine whose working is the concept</p>
+    <button type="button" class="theme-toggle" id="btn-theme" aria-label="Switch colour theme">Dark theme</button>
+  </div>
   <h1>The Merge Works <span class="sub">/ the AI-Native SDLC, as one running machine</span></h1>
   <p class="lede">A branch is a <b>car on its own lane</b>; <code style="font-family:var(--mono)">main</code> is the <b>trunk line</b> at the front. The loop runs from intent to merge and back: the <b style="color:var(--accent)">Plan hopper</b> releases a product-owner-accepted, tier-sized <code style="font-family:var(--mono)">intent.md</code> and feeds the queue, and the <b style="color:var(--accent)">Maintain monitor</b> writes each 2σ or 3σ breach back as a fresh intent. Every gauge is read straight off the machine. All six Anthropic <i>AI-Native SDLC</i> stages, simplified — the parts list marks what is the playbook's and what is local.</p>
 
@@ -158,22 +187,24 @@
   <div class="instrument">
     <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
 
+    <div class="stage-hint" aria-hidden="true">Scroll the machine sideways →</div>
     <div class="stage-wrap">
-      <svg id="stage" viewBox="0 0 1000 680" role="img" aria-label="Isometric animation: a Plan hopper feeds intent cards into a queue; pull-request cars move along parallel lanes through build, review, rebase and merge onto the main trunk; a Maintain monitor sends 2σ and 3σ control-band breaches back to the hopper as new intents.">
+      <svg id="stage" viewBox="0 0 1000 680" role="img" aria-describedby="stage-live" aria-label="Isometric animation: a Plan hopper feeds intent cards into a queue; pull-request cars move along parallel lanes through build, review, rebase, re-check and merge onto the main trunk; a Maintain monitor sends 2σ and 3σ control-band breaches back to the hopper as new intents.">
         <g id="scene"></g>
       </svg>
     </div>
 
     <aside class="gauges" aria-label="Live readouts">
+      <p class="sr-only" id="stage-live" aria-live="polite" aria-atomic="true"></p>
       <div class="gauge">
         <div class="lbl"><span>queue depth</span><span class="tag ok" id="g-q-tag">healthy</span></div>
         <div class="val" id="g-queue">0 / 2</div>
         <div class="note">Plan tops up to lanes×2. Empty = thin plan block.</div>
       </div>
       <div class="gauge">
-        <div class="lbl"><span>open → green</span><span class="tag ok">stable</span></div>
-        <div class="val" id="g-og">2.5<span class="unit">s</span></div>
-        <div class="note">pipeline health. Faster models move this, not the gate below.</div>
+        <div class="lbl"><span>open → green</span><span class="tag ok" id="g-og-tag">stable</span></div>
+        <div class="val" id="g-og">—<span class="unit">s</span></div>
+        <div class="note" id="g-og-note">pipeline health, measured per car, failed builds included. Faster models move this, not the gate below.</div>
       </div>
       <div class="gauge">
         <div class="lbl"><span>green → merge</span><span class="tag" id="g-gm-tag">ok</span></div>
@@ -189,7 +220,7 @@
       <div class="gauge">
         <div class="lbl"><span>needs the human</span><span class="tag" id="g-share-tag" style="color:var(--accent)">lever</span></div>
         <div class="val" id="g-share">—</div>
-        <div class="note">share of merged cars that waited on the beam. Agentic review + tiering move this.</div>
+        <div class="note">share of the last 20s of merges that waited on the beam. High always does; agentic review decides which med cars do.</div>
       </div>
       <div class="gauge">
         <div class="lbl"><span>review debt</span></div>
@@ -199,12 +230,13 @@
       <div class="gauge">
         <div class="lbl"><span>verified merges</span></div>
         <div class="val" id="g-merges">0<span class="unit" id="g-rate"></span></div>
-        <div class="note">the only output that counts (a local metric, not the article's).</div>
+        <div class="note" id="g-merges-note">merges that haven't come back as a breach (a local metric, not the article's).</div>
       </div>
       <div class="gauge">
         <div class="lbl"><span>breaches re-filed</span><span class="tag" id="g-sig-tag" style="color:var(--accent)">maintain</span></div>
         <div class="val" id="g-signals">0</div>
         <div class="note" id="g-sig-note">1σ log · 2σ diagnose · 3σ propose · each → intent.md</div>
+        <div class="note">demo breach mix: far busier than real σ rates, so you see the loop.</div>
       </div>
     </aside>
 
@@ -224,10 +256,11 @@
       </div>
       <div class="grp">
         <label for="share">Needs human</label>
-        <select id="share"><option value="0.85">85%</option><option value="0.55" selected>55%</option><option value="0.3">30%</option></select>
+        <select id="share" aria-describedby="share-hint"><option value="0.85">85%</option><option value="0.55" selected>55%</option><option value="0.3">30%</option></select>
+        <span class="sr-only" id="share-hint">Target share of cars that need the human reviewer. High-risk cars always do; the rest is how many medium-risk cars agentic review routes to the human.</span>
       </div>
       <div class="grp"><button id="btn-signal">⚡ Fire 3σ breach</button></div>
-      <div class="grp" style="color:var(--ink-dim);font-family:var(--mono);font-size:11px;">WIP fixed at 2. Tune how many cars need it.</div>
+      <div class="grp" style="color:var(--ink-dim);font-family:var(--mono);font-size:11px;">WIP fixed at 2. Tune how many cars need it, and watch escapes.</div>
     </div>
 
     <div class="titleblock">
@@ -244,24 +277,24 @@
       <table class="parts">
         <thead><tr><th>Part</th><th>Is really</th><th>Stage / term</th></tr></thead>
         <tbody>
-          <tr><td><span class="chip" style="background:#3f8fa6"></span>Plan hopper</td><td>releases <code>intent.md</code> + <code>spec.md</code> at the rate a product owner accepts them (the accept is the merge of <code>intent.md</code>), feeds the queue</td><td>①② Plan·Design · human accept</td></tr>
-          <tr><td><span class="chip" style="background:#cdd6df;border-color:#9aa6b2"></span>Intent card</td><td>planning weight — card height = tier</td><td>ADR · PR block · issue body (local)</td></tr>
-          <tr><td><span class="chip" style="background:#97a3b1"></span>A lane</td><td>one branch, one PR, one issue. Starts from a committed <code>plan.md</code> (plan mode); <code>CLAUDE.md</code>, skills and hooks shape the build but aren't drawn</td><td>③ Build · worktree per session</td></tr>
-          <tr><td><span class="chip" style="background:#30b968;border-color:#1f9d57"></span>Build lamp + eval</td><td>CI red→green. Changes to <code>CLAUDE.md</code>, skills or hooks also run the eval suite; each shipped breach fix adds an eval for the incident</td><td>④ Test · feedback loop + continuous evals</td></tr>
-          <tr><td><span class="chip" style="background:#e0a24e"></span>“AI review” tag</td><td>agentic review of every PR against <code>REVIEW.md</code>; findings inform, never approve</td><td>⑤ Deploy · layered agentic review</td></tr>
-          <tr><td><span class="chip" style="background:#1fb7cb"></span>Reviewer beam</td><td>human code-owner review + merge approval</td><td>⑤ Deploy · human for high/med; low self-merges (local deviation)</td></tr>
-          <tr><td><span class="chip" style="background:#e0943a"></span>The fitter</td><td>rebase onto the <i>current</i> trunk tip</td><td>local extension — the playbook doesn't cover rebase</td></tr>
-          <tr><td><span class="chip" style="background:#5c6675"></span>Crane</td><td>the merge — locks car onto trunk</td><td>⑤ <code>main</code> advances</td></tr>
-          <tr><td><span class="chip" style="background:#cf412c"></span>Maintain monitor</td><td>deterministic control bands: 1σ log, 2σ read-only diagnosis, 3σ may propose a PR or pre-approved runbook; each 2σ/3σ diagnosis is written as <code>intent.md</code></td><td>⑥ Maintain · post-merge signals, not prod</td></tr>
+          <tr><td><span class="chip" data-chip="plan" style="background:#3f8fa6"></span>Plan hopper</td><td>releases <code>intent.md</code> + <code>spec.md</code> at the rate a product owner accepts them (the accept is the merge of <code>intent.md</code>), feeds the queue</td><td>①② Plan·Design · human accept</td></tr>
+          <tr><td><span class="chip" data-chip="card" style="background:#cdd6df;border-color:#9aa6b2"></span>Intent card</td><td>planning weight — card height = tier</td><td>ADR · PR block · issue body (local)</td></tr>
+          <tr><td><span class="chip" data-chip="track" style="background:#97a3b1"></span>A lane</td><td>one branch, one PR, one issue. Starts from a committed <code>plan.md</code> (plan mode); <code>CLAUDE.md</code>, skills and hooks shape the build but aren't drawn</td><td>③ Build · worktree per session</td></tr>
+          <tr><td><span class="chip" data-chip="lampG" style="background:#30b968;border-color:#1f9d57"></span>Build lamp + eval</td><td>CI red→green; a failed build gets a fix and a re-run. Changes to <code>CLAUDE.md</code>, skills or hooks also run the eval suite; each shipped breach fix adds an eval for the incident</td><td>④ Test · feedback loop + continuous evals</td></tr>
+          <tr><td><span class="chip" data-chip="lampA" style="background:#e0a24e"></span>“AI review” tag</td><td>agentic review of every PR against <code>REVIEW.md</code>; findings inform, never approve. On a med car, a finding routes it to the human; a clean pass routes it to self-merge (local rule)</td><td>⑤ Deploy · layered agentic review</td></tr>
+          <tr><td><span class="chip" data-chip="beam" style="background:#1fb7cb"></span>Reviewer beam</td><td>human code-owner review + merge approval, bound to the reviewed commit SHA</td><td>⑤ Deploy · human for high/med; low self-merges (local deviation)</td></tr>
+          <tr><td><span class="chip" data-chip="med" style="background:#e0943a"></span>The fitter</td><td>rebase onto the <i>current</i> trunk tip. A rebase is a post-review push, so the car re-runs CI and a car the human reviewed re-attests the new SHA before the crane</td><td>local extension — the playbook doesn't cover rebase</td></tr>
+          <tr><td><span class="chip" data-chip="crane" style="background:#5c6675"></span>Crane</td><td>the merge — locks car onto trunk</td><td>⑤ <code>main</code> advances</td></tr>
+          <tr><td><span class="chip" data-chip="signal" style="background:#cf412c"></span>Maintain monitor</td><td>deterministic control bands: 1σ log, 2σ read-only diagnosis, 3σ may propose a PR or pre-approved runbook; each 2σ/3σ diagnosis is written as <code>intent.md</code></td><td>⑥ Maintain · post-merge signals, not prod</td></tr>
         </tbody>
       </table>
     </div>
     <div class="thesis">
       <h2>What we're trying to achieve</h2>
-      <p><b>A merge is the lock-on.</b> Until the crane lifts it, a car is a reversible proposal on its own lane. The crane is the one irreversible step — the commit becomes shared history everyone branches from. And the trunk <i>moves while you work</i>: every merge forces the other in-flight cars through the <b>fitter</b> (rebase) before their own lock-on. That reconciliation is the tax parallel work pays.</p>
+      <p><b>A merge is the lock-on.</b> Until the crane lifts it, a car is a reversible proposal on its own lane. The crane is the one irreversible step — the commit becomes shared history everyone branches from. And the trunk <i>moves while you work</i>: every merge forces the other in-flight cars through the <b>fitter</b> (rebase) before their own lock-on. A rebase is a post-review push, so the car <b>re-checks</b> before the crane: CI runs again, and a car the human reviewed re-attests the new SHA, so review stays bound to the exact commit that merges. That reconciliation is the tax parallel work pays.</p>
       <p><b>Now the loop closes.</b> The <b style="color:var(--accent)">Plan hopper</b> keeps the queue topped to <b>lanes×2</b> (queue health), stamping each intent at its tier weight — a high-risk car carries a tall ADR stack, a low-risk one a thin slip. Every merge pulls the next intent. And the <b style="color:var(--crit)">Maintain monitor</b> watches post-merge signals — nightly CI, an eval regression, cost drift, a trace — against deterministic control bands. 1σ is logged; at 2σ Claude diagnoses read-only, and at 3σ it may also propose a PR or a pre-approved runbook. Either way the diagnosis is written as a fresh <code style="font-family:var(--mono)">intent.md</code> that jumps to the <i>front</i> of the queue (a local priority rule). That is the playbook's <i>“a breached control band in production writes the next <code>intent.md</code>.”</i> <a href="control-bands/" style="color:inherit">See the control-band figure</a> for how detection, tiers and triage work.</p>
       <p><b>Honest adaptation:</b> the playbook gates at <i>merge</i> (code-owner approval) <i>and</i> at <i>release</i> (an approval hook, with dev/staging/prod autonomy tiers). This machine stops at merge: there's no release gate because there's no production deploy yet, so the return-pipe draws from <i>post-merge</i> signals instead of a prod environment.</p>
-      <p><b>The ceiling isn't the machine — it's the beam.</b> Pull Lanes to 4–5. Builds still go green (<code>open→green</code> holds), but <span class="big">green→merge climbs</span> and cars start to <b>HOLD</b>: one reviewer covers <b>WIP 2</b>, and faster models just feed more cars into that queue. The beam is fixed; <b>the share of cars that need it is what you tune</b>. That is the playbook's move — layered agentic review on every PR, “human review reserved for regulated and critical code” — so at 5 lanes, flip <b>Needs human</b> from 85% to 30%: green→merge drops and merges per minute rise, with the same single reviewer. Push it too low and you're shipping under-reviewed, which is the other half of the same warning. The target is <b class="big">verified merges per week</b>: add lanes only while the beam still reaches every car that needs it.</p>
+      <p><b>The ceiling isn't the machine — it's the beam.</b> Pull Lanes to 4–5. Builds still go green (<code>open→green</code> holds), but <span class="big">green→merge climbs</span> and cars start to <b>HOLD</b>: one reviewer covers <b>WIP 2</b>, and faster models just feed more cars into that queue. The beam is fixed; <b>the share of cars that need it is what you tune</b>. That is the playbook's move — layered agentic review on every PR, “human review reserved for regulated and critical code” — so at 5 lanes, flip <b>Needs human</b> from 85% to 30%: green→merge drops and merges per minute rise, with the same single reviewer. Push it too low and you're shipping under-reviewed: cars that skipped the human escape more often, come back through Maintain as breaches, jump the queue and stop counting as verified. That's the other half of the same warning. The target is <b class="big">verified merges per week</b>: add lanes only while the beam still reaches every car that needs it.</p>
     </div>
   </div>
 
@@ -305,7 +338,16 @@
       lampG: dark?'#38c470':'#1f9d57', lampR: dark?'#ef5a3e':'#d94226', lampA: dark?'#e0a24e':'#c77a1e',
       beam:  dark?'#2fc0d4':'#0e8fa3', signal: dark?'#ef5a3e':'#cf412c',
       text:  dark?'#aeb8c3':'#3a4450', textDim: dark?'#5e6a77':'#8b96a2',
-      badgeBg: dark?'#161b22':'#ffffff'
+      accent: dark?'#2fc0d4':'#0e8fa3',
+      badgeBg: dark?'#161b22':'#ffffff',
+      // parts-list swatches, so the legend matches the drawing in both themes
+      chip: {
+        plan:  dark?'#2f6373':'#3f8fa6', card:  dark?'#c9d2db':'#cdd6df',
+        track: dark?'#49535f':'#97a3b1', lampG: dark?'#38c470':'#30b968',
+        lampA: '#e0a24e',                beam:  dark?'#2fc0d4':'#1fb7cb',
+        med:   dark?'#eaa24e':'#e0943a', crane: dark?'#5c6774':'#5c6675',
+        signal: dark?'#ef5a3e':'#cf412c'
+      }
     };
   }
   function isDark(){
@@ -314,7 +356,14 @@
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
   var PAL = buildPal(isDark());
-  function refreshPal(){ PAL = buildPal(isDark()); }
+  function paintChips(){
+    var chips = document.querySelectorAll('.chip[data-chip]');
+    for(var i=0;i<chips.length;i++){
+      var col = PAL.chip[chips[i].getAttribute('data-chip')];
+      if(col){ chips[i].style.background = col; chips[i].style.borderColor = shade(col, -.3); }
+    }
+  }
+  function refreshPal(){ PAL = buildPal(isDark()); paintChips(); invalidate(); }
 
   // ---- geometry: emit the three visible faces of a box ----
   function box(x,y,z,w,d,h,m){
@@ -331,29 +380,45 @@
 
   // ---- world layout ----
   var TRUNK_Y = 10;
-  var ANCHOR = { BRANCH:0.9, BUILD:4, REVIEW:7, REBASE:9.5, MERGE:12 };
+  var ANCHOR = { BRANCH:0.9, BUILD:4, REVIEW:7, REBASE:9.5, RECHECK:9.5, MERGE:12 };
   var MERGE_X = 12.4;
   var BUILD_DUR=2.5, BRANCH_DUR=0.7, REVIEW_DUR=3.2, REVIEW_LOW=1.1, REBASE_BASE=0.9, REBASE_PER=0.65, MERGE_DUR=1.0;
-  var WIP = 2, AI_REVIEW_DUR=0.6, PLAN_INTERVAL=0.7, MAINTAIN_INTERVAL=6.5, SIGNAL_DUR=1.5;
+  var WIP = 2, AI_REVIEW_DUR=0.6, PLAN_INTERVAL=0.7, MAINTAIN_INTERVAL=9, SIGNAL_DUR=1.5;
+  // Stage 4: a build can fail once; the fix + re-run takes FIX_FRAC of a build
+  var BUILD_FAIL_P=0.12, BUILD_FAIL_CFG=0.22, FIX_FRAC=0.6;
+  // after a rebase: CI re-runs, and a car the human reviewed re-attests the new SHA
+  var RECHECK_CI=0.9, REATTEST_DUR=1.0;
+  // risk mix is fixed; the lever only changes how many med cars agentic review routes to the human
+  var TIER_MIX = { high:0.2, med:0.7 };   // low = the remaining 10%
+  // chance a merged change comes back as a post-merge breach, by how it was reviewed (demo rates)
+  var ESCAPE_P = { human:0.02, cleared:0.22, low:0.08 }, ESCAPE_DELAY=[2.5, 7];
+  var SHARE_WINDOW = 20;
   var SIGNAL_TYPES = ['nightly CI','eval regression','cost drift','trace anomaly'];
 
-  var main = 0, simT = 0, verified = 0;
-  var mergeTimes = [], gmEMA = null, commits = [];
+  var main = 0, simT = 0, merged = 0, escaped = 0;
+  var mergeTimes = [], mergeLog = [], gmEMA = null, ogEMA = null, commits = [];
   var sparkSamples = [], sparkAcc = 0;
   var reviewDebt = 0, wipUsed = 0;
-  var queue = [], planTimer = 0, maintainTimer = 0, signalsFiled = 0;
+  var queue = [], planTimer = 0, maintainTimer = 0, signalsFiled = 0, latent = [];
   var signals = [], lampFlash = {}, starvedFlash = 0, hopperFlash = 0;
   var signalSeq = 0, bandLog = {1:0,2:0,3:0}, diagFlash = 0, evalTasks = 20;
-  var humanShare = 0.55, humanMerged = 0;
+  var humanShare = 0.55;
 
   function laneY(i){ return 8 - i*2; }
   function cardH(tier){ return tier==='high'?0.5 : tier==='med'?0.28 : 0.12; }
 
   function pickTier(){
     var r = Math.random();
-    if(r < humanShare*0.27) return 'high';
-    if(r < humanShare) return 'med';
+    if(r < TIER_MIX.high) return 'high';
+    if(r < TIER_MIX.high + TIER_MIX.med) return 'med';
     return 'low';
+  }
+  // share of med cars agentic review can clear, so that high + routed med ≈ the lever's target share
+  function clearP(){ return Math.max(0, Math.min(1, (TIER_MIX.high + TIER_MIX.med - humanShare) / TIER_MIX.med)); }
+  function routeAfterAI(car){
+    if(car.tier==='high') car.needsHuman = true;                  // high always needs the human
+    else if(car.tier==='low') car.needsHuman = false;             // low self-merges: local rule
+    else car.needsHuman = Math.random() >= clearP();              // med: a finding routes it to the human
   }
   function nextIntent(){
     if(queue.length) return queue.shift();
@@ -363,48 +428,71 @@
   function newCar(){
     var intent = nextIntent();
     return { tier:intent.tier, origin:intent.origin, signalType:intent.signalType||null,
-             cfg: Math.random()<0.3,
-             stage:'BRANCH', t:0, ai:0, x:ANCHOR.BRANCH-0.1,
-             branchMain:main, greenAt:0, enteredReview:0, attended:false, stale:0, staleFlag:false };
+             cfg: Math.random()<0.3, failed:false, needsHuman:null,
+             stage:'BRANCH', t:0, ai:0, ci:0, reattest:false, x:ANCHOR.BRANCH-0.1,
+             branchMain:main, buildStart:0, greenAt:0, enteredReview:0, attended:false, stale:0, staleFlag:false };
   }
+
+  // lanes: removing one drains it (no new work) instead of deleting the car in flight
   var lanes = [];
+  function activeLanes(){ var n=0; for(var i=0;i<lanes.length;i++) if(!lanes[i].draining) n++; return n; }
+  function trimLanes(){ while(lanes.length > 1 && lanes[lanes.length-1].draining && !lanes[lanes.length-1].car) lanes.pop(); }
   function setLanes(n){
-    while(lanes.length < n) lanes.push({ car:newCar() });
-    while(lanes.length > n) lanes.pop();
+    for(var i=0;i<lanes.length && i<n;i++){
+      if(lanes[i].draining){ lanes[i].draining=false; if(!lanes[i].car) lanes[i].car=newCar(); }
+    }
+    while(lanes.length < n) lanes.push({ car:newCar(), draining:false });
+    for(var j=n;j<lanes.length;j++){
+      var ln = lanes[j]; ln.draining = true;
+      if(ln.car && ln.car.stage==='BRANCH'){   // nothing built yet: hand the intent back to the queue
+        queue.unshift({ tier:ln.car.tier, origin:ln.car.origin, signalType:ln.car.signalType });
+        ln.car = null;
+      }
+    }
+    trimLanes();
   }
 
   // detection is deterministic control bands, not a model (playbook Stage 6)
-  function pickSigma(){ var r=Math.random(); return r<0.5?1 : r<0.8?2 : 3; }
-  function fireSignal(sigma){
+  // demo breach mix: far busier than real σ rates, so the loop is visible
+  function pickSigma(){ var r=Math.random(); return r<0.7?1 : r<0.92?2 : 3; }
+  function fireSignal(sigma, escape){
     var type = SIGNAL_TYPES[signalSeq++ % SIGNAL_TYPES.length];
     bandLog[sigma]++; lampFlash[type] = 0.9;
     if(sigma===2) diagFlash = 1.4;
-    if(sigma>=2) signals.push({ type:type, t:0, sigma:sigma });   // diagnosis is written as intent.md at 2σ and 3σ
+    if(sigma>=2) signals.push({ type:type, t:0, sigma:sigma, escape:!!escape });   // diagnosis is written as intent.md at 2σ and 3σ
   }
 
   function completeMerge(lane){
-    main++; verified++; mergeTimes.push(simT);
-    var gm = simT - lane.car.greenAt;
+    var car = lane.car;
+    main++; merged++; mergeTimes.push(simT);
+    var gm = simT - car.greenAt;
     gmEMA = (gmEMA==null) ? gm : gmEMA*0.78 + gm*0.22;
-    if(lane.car.tier!=='low') humanMerged++;
-    if(lane.car.origin==='signal') evalTasks++;   // each incident becomes a regression eval
-    commits.unshift({ tier: lane.car.tier });
+    mergeLog.push({ t:simT, human:!!car.needsHuman });
+    if(car.origin==='signal') evalTasks++;   // each incident becomes a regression eval
+    // a change that skipped the human is more likely to come back as a breach
+    var path = car.needsHuman ? 'human' : (car.tier==='low' ? 'low' : 'cleared');
+    if(Math.random() < ESCAPE_P[path]) latent.push({ at: simT + ESCAPE_DELAY[0] + Math.random()*(ESCAPE_DELAY[1]-ESCAPE_DELAY[0]) });
+    commits.unshift({ tier: car.tier });
     if(commits.length > 8) commits.pop();
-    for(var i=0;i<lanes.length;i++){ if(lanes[i]!==lane && lanes[i].car.stage!=='BRANCH') lanes[i].car.staleFlag=true; }
-    lane.car = newCar();
+    for(var i=0;i<lanes.length;i++){ var o=lanes[i].car; if(lanes[i]!==lane && o && o.stage!=='BRANCH') o.staleFlag=true; }
+    lane.car = lane.draining ? null : newCar();
   }
 
   function step(dt){
     simT += dt;
-    var queueTarget = lanes.length * 2;
+    var queueTarget = activeLanes() * 2;
 
     // Stage 1–2: the product owner accepts one intent.md + spec.md per PLAN_INTERVAL, up to lanes×2
     planTimer += dt;
     if(planTimer >= PLAN_INTERVAL){ planTimer = 0; if(queue.length < queueTarget) queue.push({ tier:pickTier(), origin:'plan' }); }
 
-    // Stage 6: Maintain emits a post-merge signal on a cadence
+    // Stage 6: Maintain emits background post-merge signals on a cadence...
     maintainTimer += dt;
     if(maintainTimer >= MAINTAIN_INTERVAL){ maintainTimer = 0; fireSignal(pickSigma()); }
+    // ...and changes that escaped review surface as real 2σ/3σ breaches
+    for(var li=latent.length-1; li>=0; li--){
+      if(simT >= latent[li].at){ escaped++; fireSignal(Math.random()<0.6?2:3, true); latent.splice(li,1); }
+    }
 
     // 2σ/3σ breaches travel the return-pipe, then re-file to the FRONT of the queue (local priority rule)
     for(var si=signals.length-1; si>=0; si--){
@@ -421,11 +509,12 @@
     hopperFlash = Math.max(0, hopperFlash-dt);
     diagFlash = Math.max(0, diagFlash-dt);
 
-    // Stage 5: reviewer attention — high/med cars compete for WIP slots, FIFO
+    // Stage 5: reviewer attention — cars routed to the human compete for WIP slots, FIFO.
+    // Re-attesting a rebased car counts too; it entered review earlier, so it goes first.
     var qrev = [];
     for(var i=0;i<lanes.length;i++){
-      var c=lanes[i].car; c.attended=false;
-      if(c.stage==='REVIEW' && c.ai>=1 && c.tier!=='low') qrev.push(c);
+      var c=lanes[i].car; if(!c) continue; c.attended=false;
+      if((c.stage==='REVIEW' && c.ai>=1 && c.needsHuman) || (c.stage==='RECHECK' && c.ci>=1 && c.reattest)) qrev.push(c);
     }
     qrev.sort(function(a,b){ return a.enteredReview-b.enteredReview; });
     for(var q=0;q<qrev.length;q++) qrev[q].attended = q < WIP;
@@ -434,28 +523,50 @@
 
     for(var L=0;L<lanes.length;L++){
       var lane=lanes[L], car=lane.car;
+      if(!car) continue;
       var target = ANCHOR[car.stage] != null ? ANCHOR[car.stage] : car.x;
       car.x += (target - car.x) * Math.min(1, dt*3.5);
 
       if(car.stage==='BRANCH'){
         car.t += dt/BRANCH_DUR;
-        if(car.t>=1){ car.stage='BUILD'; car.t=0; }
+        if(car.t>=1){ car.stage='BUILD'; car.t=0; car.buildStart=simT; }
       } else if(car.stage==='BUILD'){
-        car.t += dt/(BUILD_DUR * (car.cfg?1.3:1));   // Stage 4: CLAUDE.md / skills / hooks changes also run the eval suite
-        if(car.t>=1){ car.stage='REVIEW'; car.t=0; car.greenAt=simT; car.enteredReview=simT; }
+        // Stage 4: CLAUDE.md / skills / hooks changes also run the eval suite, so they build slower and fail more
+        car.t += dt/(BUILD_DUR * (car.cfg?1.3:1) * (car.failed?FIX_FRAC:1));
+        if(car.t>=1){
+          if(!car.failed && Math.random() < (car.cfg?BUILD_FAIL_CFG:BUILD_FAIL_P)){ car.failed=true; car.t=0; }
+          else {
+            car.stage='REVIEW'; car.t=0; car.greenAt=simT; car.enteredReview=simT;
+            var og = simT - car.buildStart; ogEMA = (ogEMA==null) ? og : ogEMA*0.8 + og*0.2;
+          }
+        }
       } else if(car.stage==='REVIEW'){
-        if(car.ai < 1) car.ai += dt/AI_REVIEW_DUR;      // agentic review on every PR; findings inform, never approve
-        else if(car.tier==='low') car.t += dt/REVIEW_LOW;        // low self-merges: local rule; the playbook requires code-owner approval on every PR
+        if(car.ai < 1){ car.ai += dt/AI_REVIEW_DUR; if(car.ai>=1) routeAfterAI(car); }   // agentic review on every PR; findings inform, never approve
+        else if(!car.needsHuman) car.t += dt/REVIEW_LOW;     // self-merge path: local rule; the playbook requires code-owner approval on every PR
         else if(car.attended) car.t += dt/REVIEW_DUR;        // only progresses under the beam
         if(car.t>=1){ car.stage='REBASE'; car.t=0; car.stale = Math.max(0, main - car.branchMain); }
       } else if(car.stage==='REBASE'){
         car.t += dt/(REBASE_BASE + REBASE_PER*car.stale);
-        if(car.t>=1){ car.stage='MERGE'; car.t=0; }
+        if(car.t>=1){
+          var rewritten = car.stale > 0;
+          car.branchMain = main; car.staleFlag = false; car.t = 0;
+          // a rebase is a post-review push: the reviewed SHA is no longer the SHA that would merge
+          if(rewritten){ car.stage='RECHECK'; car.ci=0; car.reattest = !!car.needsHuman; }
+          else car.stage='MERGE';
+        }
+      } else if(car.stage==='RECHECK'){
+        if(car.ci < 1) car.ci += dt/RECHECK_CI;              // CI re-runs on the rebased commit
+        else if(!car.reattest){ car.stage='MERGE'; car.t=0; }
+        else if(car.attended){                               // the reviewer re-attests the new SHA
+          car.t += dt/REATTEST_DUR;
+          if(car.t>=1){ car.stage='MERGE'; car.t=0; }
+        }
       } else if(car.stage==='MERGE'){
         car.t += dt/MERGE_DUR;
         if(car.t>=1){ completeMerge(lane); }
       }
     }
+    trimLanes();
 
     sparkAcc += dt;
     if(sparkAcc >= 0.4){ sparkAcc=0; sparkSamples.push(gmEMA==null?0:gmEMA); if(sparkSamples.length>59) sparkSamples.shift(); }
@@ -463,14 +574,17 @@
 
   // ---- rendering ----
   var sceneEl = document.getElementById('scene');
+  var stageSvg = document.getElementById('stage');
+  // on a phone the drawing renders small; scale its labels up so they stay readable
+  var FS = 1;
+  function measureFS(){ var w = stageSvg.getBoundingClientRect().width; FS = (w && w < 800) ? 1.25 : 1; }
 
   function txt(x,y,z,str,size,color,anchor,weight){
     var s=iso(x,y,z);
-    return '<text x="'+s[0].toFixed(1)+'" y="'+s[1].toFixed(1)+'" font-size="'+size+'" fill="'+color+'" '+
-      'text-anchor="'+(anchor||'middle')+'" font-weight="'+(weight||500)+'" letter-spacing="0.5" style="paint-order:stroke;stroke:'+PAL.badgeBg+';stroke-width:2.6px;stroke-linejoin:round">'+str+'</text>';
+    return txtScreen(s[0], s[1], str, size, color, anchor, weight);
   }
   function txtScreen(sx,sy,str,size,color,anchor,weight){
-    return '<text x="'+sx.toFixed(1)+'" y="'+sy.toFixed(1)+'" font-size="'+size+'" fill="'+color+'" '+
+    return '<text x="'+sx.toFixed(1)+'" y="'+sy.toFixed(1)+'" font-size="'+(size*FS).toFixed(1)+'" fill="'+color+'" '+
       'text-anchor="'+(anchor||'middle')+'" font-weight="'+(weight||500)+'" letter-spacing="0.5" style="paint-order:stroke;stroke:'+PAL.badgeBg+';stroke-width:2.6px;stroke-linejoin:round">'+str+'</text>';
   }
   function disc(x,y,z,r,fill){ var s=iso(x,y,z); return '<circle cx="'+s[0].toFixed(1)+'" cy="'+s[1].toFixed(1)+'" r="'+r+'" fill="'+fill+'" stroke="'+PAL.stroke+'" stroke-width="1"/>'; }
@@ -517,7 +631,8 @@
 
     // --- cars (+ intent card riding during plan/build) ---
     for(var L=0;L<lanes.length;L++){
-      var car=lanes[L].car, pose=carPose(car,L);
+      var car=lanes[L].car; if(!car) continue;
+      var pose=carPose(car,L);
       solids.push(box(pose.x, pose.y, pose.z, 0.9, 0.78, 0.66, PAL.tier[car.tier]));
       if(car.stage==='BRANCH' || car.stage==='BUILD'){
         var cm2 = mat(shade(PAL.tbase[car.tier], .32), PAL.stroke);
@@ -540,14 +655,14 @@
       var pt=bez(signals[sg].t);
       out.push('<circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="11" fill="'+PAL.signal+'" opacity="0.18"/>'+
                '<circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="4.5" fill="'+PAL.signal+'" stroke="'+PAL.badgeBg+'" stroke-width="1.5"/>');
-      if(signals[sg].t < 0.55) out.push(txtScreen(pt[0], pt[1]-13, signals[sg].type, 10, PAL.signal, 'middle', 700));
+      if(signals[sg].t < 0.55) out.push(txtScreen(pt[0], pt[1]-13, (signals[sg].escape?'escape · ':'')+signals[sg].type, 10, PAL.signal, 'middle', 700));
     }
 
     // reviewer beams to attended cars
     var opTop = iso(7.05, TRUNK_Y+1.25, 1.35);
     for(var b=0;b<lanes.length;b++){
       var bc=lanes[b].car;
-      if(bc.stage==='REVIEW' && bc.attended && bc.tier!=='low'){
+      if(bc && bc.attended && (bc.stage==='REVIEW' || bc.stage==='RECHECK')){
         var ct=iso(bc.x+0.45, laneY(b)+0.4, 0.95);
         out.push('<line x1="'+opTop[0].toFixed(1)+'" y1="'+opTop[1].toFixed(1)+'" x2="'+ct[0].toFixed(1)+'" y2="'+ct[1].toFixed(1)+'" stroke="'+PAL.beam+'" stroke-width="7" opacity="0.22" stroke-linecap="round"/>');
         out.push('<line x1="'+opTop[0].toFixed(1)+'" y1="'+opTop[1].toFixed(1)+'" x2="'+ct[0].toFixed(1)+'" y2="'+ct[1].toFixed(1)+'" stroke="'+PAL.beam+'" stroke-width="1.5" opacity="0.7" stroke-linecap="round"/>');
@@ -556,18 +671,25 @@
 
     // per-car lamps + badges
     for(var L2=0;L2<lanes.length;L2++){
-      var c=lanes[L2].car, pose2=carPose(c,L2), cx=pose2.x+0.45, cz=pose2.z+0.66;
-      if(c.stage==='BUILD'){ out.push(glowDisc(cx, pose2.y+0.4, cz+0.5, 5, PAL.lampR));
-        if(c.cfg) out.push(txt(cx, pose2.y+0.4, cz+1.1, 'config → evals', 9.5, PAL.lampA, 'middle', 700)); }
-      else if(c.stage!=='BRANCH'){ out.push(glowDisc(cx, pose2.y+0.4, cz+0.5, 5, PAL.lampG)); }
+      var c=lanes[L2].car; if(!c) continue;
+      var pose2=carPose(c,L2), cx=pose2.x+0.45, cz=pose2.z+0.66, ly2=pose2.y+0.4;
+      var red = c.stage==='BUILD' || (c.stage==='RECHECK' && c.ci<1);
+      if(red) out.push(glowDisc(cx, ly2, cz+0.5, 5, PAL.lampR));
+      else if(c.stage!=='BRANCH') out.push(glowDisc(cx, ly2, cz+0.5, 5, PAL.lampG));
+      if(c.stage==='BUILD' && c.failed) out.push(txt(cx, ly2, cz+1.1, '✕ fix + re-run', 9.5, PAL.lampR, 'middle', 700));
+      else if(c.stage==='BUILD' && c.cfg) out.push(txt(cx, ly2, cz+1.1, 'config → evals', 9.5, PAL.lampA, 'middle', 700));
       if(c.origin==='signal' && (c.stage==='BRANCH'||c.stage==='BUILD'))
-        out.push(txt(cx, pose2.y+0.4, cz+1.5, '◆ re-filed', 9.5, PAL.signal, 'middle', 700));
+        out.push(txt(cx, ly2, cz+1.5, '◆ re-filed', 9.5, PAL.signal, 'middle', 700));
       if(c.stage==='REVIEW' && c.ai<1)
-        out.push(txt(cx, pose2.y+0.4, cz+1.15, 'AI review', 10.5, PAL.lampA, 'middle', 700));
-      else if(c.stage==='REVIEW' && !c.attended && c.tier!=='low')
-        out.push(txt(cx, pose2.y+0.4, cz+1.15, 'HOLD', 12, PAL.lampR, 'middle', 700));
+        out.push(txt(cx, ly2, cz+1.15, 'AI review', 10.5, PAL.lampA, 'middle', 700));
+      else if(c.stage==='REVIEW' && !c.attended && c.needsHuman)
+        out.push(txt(cx, ly2, cz+1.15, 'HOLD', 12, PAL.lampR, 'middle', 700));
+      if(c.stage==='RECHECK'){
+        if(c.ci<1) out.push(txt(cx, ly2, cz+1.15, 're-build', 10.5, PAL.lampR, 'middle', 700));
+        else if(c.reattest) out.push(txt(cx, ly2, cz+1.15, c.attended?'re-attest SHA':'HOLD · re-attest', 10.5, c.attended?PAL.beam:PAL.lampR, 'middle', 700));
+      }
       if((c.stage==='REBASE' && c.stale>0) || (c.staleFlag && (c.stage==='BUILD'||c.stage==='REVIEW')))
-        out.push(txt(cx, pose2.y+0.4, cz+(c.stage==='REVIEW'?1.55:1.15), '↻ rebase', 11, PAL.tbase.med, 'middle', 700));
+        out.push(txt(cx, ly2, cz+(c.stage==='REVIEW'?1.55:1.15), '↻ rebase', 11, PAL.tbase.med, 'middle', 700));
     }
 
     // fixtures glow + labels
@@ -591,23 +713,46 @@
     // trunk + stage labels
     out.push(txt(-1.4, TRUNK_Y+0.45, 0.9, 'main', 15, PAL.text, 'start', 700));
     out.push(txt(MERGE_X-0.05, TRUNK_Y+0.45, 2.15, '#'+main, 13, PAL.beam, 'middle', 700));
-    var stl=[['BRANCH','plan.md'],['BUILD','diff + tests'],['REVIEW','PR review'],['REBASE','rebase'],['MERGE','merge']];
+    var stl=[['BRANCH','plan.md'],['BUILD','diff + tests'],['REVIEW','PR review'],['REBASE','rebase · re-check'],['MERGE','merge']];
     for(var sl=0; sl<stl.length; sl++) out.push(txt(ANCHOR[stl[sl][0]], laneY(0)-1.15, 0.2, stl[sl][1], 11, PAL.textDim, 'middle', 500));
-    for(var ll=0; ll<lanes.length; ll++) out.push(txt(ANCHOR.BRANCH-1.3, laneY(ll)+0.4, 0.5, 'L'+(ll+1), 11, PAL.textDim, 'middle', 600));
+    for(var ll=0; ll<lanes.length; ll++){
+      var lbl = 'L'+(ll+1) + (lanes[ll].draining ? (lanes[ll].car ? ' · draining' : ' · closed') : '');
+      out.push(txt(ANCHOR.BRANCH-1.3, laneY(ll)+0.4, 0.5, lbl, 11, PAL.textDim, 'middle', 600));
+    }
 
     sceneEl.innerHTML = out.join('');
   }
 
   // ---- gauges ----
   var el = function(id){ return document.getElementById(id); };
+  var liveEl = el('stage-live'), liveKey = '', liveAt = 0, filedSeen = 0;
+  function updateLive(gmState){
+    // announce state changes, not every number, and no more than once every 3 s
+    var parts = [];
+    if(queue.length===0 || starvedFlash>0) parts.push('Queue starved.');
+    parts.push(gmState===0 ? 'Green to merge ok.' : gmState===1 ? 'Green to merge rising.' : 'Green to merge stalled.');
+    parts.push(wipUsed>=WIP ? 'Reviewer maxed.' : 'Reviewer has a free stream.');
+    if(reviewDebt>0) parts.push(reviewDebt+(reviewDebt===1?' car':' cars')+' on hold for the reviewer.');
+    var key = parts.join(' ');
+    var filedNow = signalsFiled > filedSeen;
+    var now = Date.now();
+    if((key!==liveKey || filedNow) && now - liveAt > 3000){
+      liveKey = key; liveAt = now; filedSeen = signalsFiled;
+      liveEl.textContent = (filedNow ? 'Breach re-filed as a new intent. ' : '') + key +
+        ' '+(merged-escaped)+' verified merges, '+escaped+(escaped===1?' came back as a breach.':' came back as breaches.');
+    }
+  }
   function updateGauges(){
-    var queueTarget = lanes.length*2;
+    var queueTarget = activeLanes()*2;
     el('g-queue').textContent = queue.length+' / '+queueTarget;
     el('g-queue').style.color = (queue.length===0 || starvedFlash>0) ? 'var(--crit)' : 'var(--ink)';
     el('g-q-tag').className = 'tag '+((queue.length===0||starvedFlash>0)?'crit':'ok');
     el('g-q-tag').textContent = (queue.length===0||starvedFlash>0)?'starved':'healthy';
 
-    el('g-og').innerHTML = BUILD_DUR.toFixed(1)+'<span class="unit">s</span>';
+    el('g-og').innerHTML = (ogEMA==null?'—':ogEMA.toFixed(1))+'<span class="unit">s</span>';
+    var slow = ogEMA!=null && ogEMA > BUILD_DUR*1.45;
+    el('g-og-tag').className = 'tag '+(slow?'warn':'ok');
+    el('g-og-tag').textContent = slow?'slow':'stable';
     var gm = gmEMA;
     el('g-gm').innerHTML = (gm==null?'—':gm.toFixed(1))+'<span class="unit">s</span>';
     var gmState = gm==null?0 : (gm<5?0 : gm<9?1 : 2);
@@ -615,55 +760,86 @@
     el('g-gm-tag').textContent = gmState===0?'ok':gmState===1?'rising':'stalled';
 
     var cutoff = simT-10; while(mergeTimes.length && mergeTimes[0]<cutoff) mergeTimes.shift();
-    el('g-merges').innerHTML = verified+'<span class="unit" id="g-rate"></span>';
+    el('g-merges').innerHTML = (merged-escaped)+'<span class="unit" id="g-rate"></span>';
     el('g-rate').textContent = '  '+((mergeTimes.length/10)*60).toFixed(0)+'/min';
+    el('g-merges-note').textContent = merged+' merged · '+escaped+' came back as '+(escaped===1?'a breach':'breaches')+'. A merge counts once it stays fixed (a local metric, not the article’s).';
 
     el('g-wip').textContent = wipUsed+' / '+WIP;
     el('g-wip-tag').className='tag '+(wipUsed>=WIP?'warn':'ok'); el('g-wip-tag').textContent = wipUsed>=WIP?'maxed':'free';
     el('g-debt').textContent = reviewDebt;
     el('g-debt').style.color = reviewDebt>0 ? 'var(--crit)' : 'var(--ink)';
     el('g-signals').textContent = signalsFiled;
-    el('g-sig-note').textContent = '1σ log '+bandLog[1]+' · 2σ diagnosed '+bandLog[2]+' · 3σ proposed '+bandLog[3]+' · evals '+evalTasks;
-    el('g-share').textContent = verified ? Math.round(100*humanMerged/verified)+'%' : '—';
+    el('g-sig-note').textContent = '1σ log '+bandLog[1]+' · 2σ diagnosed '+bandLog[2]+' · 3σ proposed '+bandLog[3]+' · escapes '+escaped+' · evals '+evalTasks;
+
+    // needs the human: rolling window, so a lever change shows within seconds
+    var wcut = simT - SHARE_WINDOW; while(mergeLog.length && mergeLog[0].t < wcut) mergeLog.shift();
+    var hn = 0; for(var m=0;m<mergeLog.length;m++) if(mergeLog[m].human) hn++;
+    el('g-share').textContent = mergeLog.length ? Math.round(100*hn/mergeLog.length)+'%' : '—';
 
     if(sparkSamples.length>1){
       var maxv=1; for(var i=0;i<sparkSamples.length;i++) if(sparkSamples[i]>maxv) maxv=sparkSamples[i];
       var W=240,H=30, n=sparkSamples.length, pts=[];
       for(var j=0;j<n;j++){ pts.push(((j/(n-1))*W).toFixed(1)+','+(H-2-(sparkSamples[j]/maxv)*(H-5)).toFixed(1)); }
-      var col = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#0e8fa3';
+      var col = PAL.accent;
       el('spark').innerHTML = '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+col+'" stroke-width="1.5" stroke-linejoin="round"/>'+
         '<circle cx="'+W+'" cy="'+(H-2-(sparkSamples[n-1]/maxv)*(H-5)).toFixed(1)+'" r="2.5" fill="'+col+'"/>';
     }
+    updateLive(gmState);
   }
 
-  // ---- loop ----
+  // ---- loop: runs only while playing and on screen; paused or hidden, it renders on change ----
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var playing = !reduced, speed = 2, last=0, pending=0;
+  var playing = !reduced, speed = 2, last=0, pending=0, raf=0, dirty=true, onScreen=true;
+  function schedule(){ if(!raf && onScreen && !document.hidden) raf = requestAnimationFrame(frame); }
+  function invalidate(){ dirty = true; schedule(); }
   function frame(ts){
+    raf = 0;
     if(!last) last=ts;
     var dt0=(ts-last)/1000; last=ts;
     var dt = playing ? Math.min(0.05, dt0)*speed : 0;
     if(pending>0){ dt=pending; pending=0; }
-    if(dt>0) step(dt);
-    render(); updateGauges();
-    requestAnimationFrame(frame);
+    if(dt>0){ step(dt); dirty=true; }
+    if(dirty){ render(); updateGauges(); dirty=false; }
+    if(playing) schedule(); else last=0;
   }
+  measureFS();
+  paintChips();
   setLanes(1);
-  requestAnimationFrame(frame);
+  schedule();
+
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(entries){
+      onScreen = entries[0].isIntersecting;
+      if(onScreen){ last=0; invalidate(); }
+    }).observe(document.querySelector('.instrument'));
+  }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden){ last=0; schedule(); } });
+  window.addEventListener('resize', function(){ var f=FS; measureFS(); if(f!==FS) invalidate(); });
 
   // ---- controls ----
   var btnPlay=el('btn-play');
   function syncPlay(){ btnPlay.textContent = playing?'❙❙ Pause':'▶ Run'; }
   syncPlay();
-  btnPlay.addEventListener('click', function(){ playing=!playing; syncPlay(); });
-  el('btn-step').addEventListener('click', function(){ pending=0.4; });
-  el('btn-signal').addEventListener('click', function(){ fireSignal(3); if(!playing){ pending=0.1; } });
-  el('share').addEventListener('change', function(e){ humanShare=parseFloat(e.target.value); });
+  btnPlay.addEventListener('click', function(){ playing=!playing; syncPlay(); last=0; invalidate(); });
+  el('btn-step').addEventListener('click', function(){ pending=0.4; invalidate(); });
+  el('btn-signal').addEventListener('click', function(){ fireSignal(3); if(!playing){ pending=0.1; } invalidate(); });
+  el('share').addEventListener('change', function(e){ humanShare=parseFloat(e.target.value); invalidate(); });
   el('speed').addEventListener('change', function(e){ speed=parseFloat(e.target.value); });
   var lanesInput=el('lanes'), lanesN=el('lanes-n');
-  lanesInput.addEventListener('input', function(e){ var n=parseInt(e.target.value,10); setLanes(n); lanesN.textContent=n; });
+  lanesInput.addEventListener('input', function(e){ var n=parseInt(e.target.value,10); setLanes(n); lanesN.textContent=n; invalidate(); });
 
-  if(window.matchMedia){ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refreshPal); }
-  new MutationObserver(refreshPal).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+  // ---- theme: one toggle, remembered, shared with control-bands/ ----
+  var btnTheme = el('btn-theme');
+  function syncTheme(){ btnTheme.textContent = isDark() ? 'Light theme' : 'Dark theme'; }
+  syncTheme();
+  btnTheme.addEventListener('click', function(){
+    var next = isDark() ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('merge-works-theme', next); }catch(e){}
+  });
+  if(window.matchMedia){ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ refreshPal(); syncTheme(); }); }
+  new MutationObserver(function(){ refreshPal(); syncTheme(); }).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
 })();
 </script>
+</body>
+</html>
